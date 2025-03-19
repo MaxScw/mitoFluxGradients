@@ -1,0 +1,87 @@
+function y = lm_decay_model_fastest_debug(time,param,consts,irf,dt_irf,T,coarse)
+
+% normalized to the number of photons
+%
+% param(1) : shift of decay model from IRF 
+%
+% if one expo:
+% P = param(2)*exp(-t/param(3))+(1-param(2))
+% param(2): fractional amp of expo decay
+% param(3): lifetime of the first decay
+%
+% if two expo:
+% P = param(2)*param(4)*exp(-t/param(3))+param(2)*(1-param(4))*exp(-t/(param(5)*param(3)))+(1-param(2));
+% param(4) : fraction of the first decay 
+% param(5) : 1- FRET efficiency (short/long lifetime)
+% 
+% consts = [nexpo, counts,fit_start,fit_end]
+% nexpo: number of exponentials in your model
+% counts: Total number of photons in the region of interest 
+
+%coarse=8; %from 1 to 16, 16 being highest binning, only 1 and even numbers are admitted
+
+
+nexpo = consts(1);
+counts = consts(2);
+fit_start = consts(3);
+fit_end = consts(4);
+shift = round(param(1));
+
+
+scale=length(irf)./length(time)./coarse;
+
+% if ~exist('irf')|irf==-1
+%     loaded_irf = load('currentIRF.mat');
+%     irf = loaded_irf.decay;
+%     time_irf = loaded_irf.time;
+%     dt_irf = time_irf(2)-time_irf(1);
+%     irf = double(irf/(sum(irf)*dt_irf));
+% end
+
+
+new_irf = reshape(irf,length(irf)./(length(time)*scale),length(time)*scale);
+new_irf = sum(new_irf,1)';
+
+adc_ratio = length(new_irf)/length(time); 
+dt=dt_irf.*coarse;
+
+%time window for decay model
+
+%t = (0:dt_irf:T)'; 
+%t = (1:length(time))'.*dt; 
+t = (0:dt:T)'; 
+
+% if nexpo == 1
+%     decay_model = param(2)*exp(-t/param(3))+(1-param(2));
+% elseif nexpo == 2
+%     decay_model = param(2)*param(4)*exp(-t/param(3))...
+%         +param(2)*(1-param(4))*exp(-t/(param(5)*param(3)))+(1-param(2));
+% end
+
+decay_model = param(2)*param(4)*exp(-t/param(3))...
+     +param(2)*(1-param(4))*exp(-t/(param(5)*param(3)))+(1-param(2));
+
+decay_model(end+1:end+length(t)) = decay_model(1:length(t));
+%decay_model(end+1:end+length(t)) = decay_model(1:length(t));
+
+decay_model = mycircshift(decay_model,shift);
+
+
+%convnfft is about 3 times faster than conv (no it's not)
+%y = convnfft(new_irf,decay_model)*dt;
+%y = convnfft(irf,decay_model)*dt_irf;
+%y = conv(irf,decay_model)*dt_irf;
+y = conv(new_irf,decay_model)*dt;
+
+%y = y(length(t)+1:length(t)+length(irf));
+y = y(length(t)+1:length(t)+length(new_irf));
+
+new_y = reshape(y,round(adc_ratio),length(time));
+new_y = sum(new_y,1);
+y = new_y';
+
+%normalize to the number of total counts
+y = y/sum(y(fit_start:fit_end))*counts;
+%y=y';
+
+% plot(y)
