@@ -1,10 +1,10 @@
 clear all
 clc
 
-temperature = 40;
+temperature = 22;
 rings=10;
-lowoxy=0.1;
-highoxy=0.2;
+lowoxy=0.2;
+highoxy=0.3;
 
 splitLow = strsplit(string(lowoxy), '.');
 splitHigh = strsplit(string(highoxy), '.');

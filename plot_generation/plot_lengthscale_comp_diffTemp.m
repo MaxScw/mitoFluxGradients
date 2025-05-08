@@ -6,6 +6,7 @@ pp_path = '../data/EXP_temperatureResolved/postprocessing_results/';
 plot_path = '../data/EXP_temperatureResolved/plots/';
 
 temps = [22 28 31 36];
+kelvin_temps = temps+273.15;
 
 jox_dec_list = {};
 sigma_jox_dec_list = {};
@@ -140,10 +141,10 @@ title('J_{ox} versus c gradient decay length', 'Interpreter','tex')
 
 cb = colorbar;
 clim([0.5 4.5])
-title(cb, 'T (°C)', 'Interpreter', 'tex')
+title(cb, 'T (K)', 'Interpreter', 'tex')
 
 cb.Ticks = linspace(1, 4, 4);
-cb.TickLabels = temps;
+cb.TickLabels = kelvin_temps;
 
 savefig(string(plot_path)+'LambdaJox_vs_lambdaCox_tempComp.fig')
 saveas(fig, string(plot_path)+'LambdaJox_vs_lambdaCox_tempComp.fig')
@@ -153,22 +154,22 @@ saveas(fig, string(plot_path)+'LambdaJox_vs_lambdaCox_tempComp.fig')
 fig = figure('Renderer', 'painters', 'Position', [10 10 700 500]);
 set(gca,'FontSize',15)
 % yscale('log')
-xlim([20, 40])
+xlim([20+273.5, 40+273.5])
 hold on
 
 for temp=1:numel(temps)
 
     max_jox_dec = jox_dec_list{temp}(end);
     sigma_max_jox_dec = sigma_jox_dec_list{temp}(end);
-    plot(temps(temp), max_jox_dec, 'o', ...
+    plot(kelvin_temps(temp), max_jox_dec, 'o', ...
          'Color', 'red', 'MarkerSize',15, 'LineWidth',1.5)
-    errorbar(temps(temp), max_jox_dec, sigma_max_jox_dec, ...
+    errorbar(kelvin_temps(temp), max_jox_dec, sigma_max_jox_dec, ...
          'Color', 'red', 'MarkerSize',15, 'LineWidth',1.5)
 
 end
 
 set(gca,'FontSize',15)
-xlabel('temperature (°C)')
+xlabel('temperature (K)')
 ylabel('\lambda_{J_{ox}} (\mu m)')
 title('\lambda( J_{ox}) at maximum oxygen versus temperature', 'Interpreter','tex')
 
@@ -206,26 +207,132 @@ end
 % plotting
 fig = figure('Renderer', 'painters', 'Position', [10 10 700 500]);
 set(gca,'FontSize',15)
-xlim([21, 37])
+xlim([273.5+21, 273.5+37])
 hold on
 
-plot(temps, ring_averaged_jox_list, 'o',...
+plot(kelvin_temps, ring_averaged_jox_list, 'o',...
      'Color', 'red', 'MarkerSize',15, 'LineWidth',1.5)
-errorbar(temps, ring_averaged_jox_list, ring_averaged_sigma_jox_list, ...
+errorbar(kelvin_temps, ring_averaged_jox_list, ring_averaged_sigma_jox_list, ...
          ring_averaged_sigma_jox_list, 'o',...
          'Color', 'red', 'MarkerSize',15, 'LineWidth',1.5)
 
-xlabel('temperature (°C)')
+xlabel('temperature (K)')
 ylabel('\langle J_{ox}(r) \rangle_r (\muM/s)')
 title('whole-cell average J_{ox} versus temperature', 'Interpreter','tex')
 
 savefig(string(plot_path)+'ringAverageJox_vs_temp.fig')
 saveas(fig, string(plot_path)+'ringAverageJox_vs_temp.png')
 
+%% plot vMax and kM temperature profiles for different rings
+fig2 = figure('Renderer', 'painters', 'Position', [10 10 1200 600]);
+start_ring = 2;
+cs = parula(10);
+colormap(cs)
+
+load(string(pp_path)+'plot_data_multiple_oxy_ranges'+string(temp_string)+'.mat');
+dist = mean(oxygen_ranges_data{1}.dist_all, 'omitnan');
+
+eyring = true;
+
+deltaG_bykb = [];
+
+for ring=start_ring:10
+    vMax_temps = [];
+    sigma_vMax_temps = [];
+    kM_temps = [];
+    sigma_kM_temps = [];
+
+    for temp=1:numel(temps)
+   
+        kM = kM_list{temp}.kM_all(2, :);
+        sigma_kM = sigma_kM_list{temp}.sigma_kM_all(2, :);
+    
+        vMax = vMax_list{temp}.vMax_all(2, :);
+        sigma_vMax = sigma_vMax_list{temp}.sigma_vMax_all(2, :);
+     
+        vMax_temps = [vMax_temps, vMax(ring)];
+        sigma_vMax_temps = [sigma_vMax_temps, sigma_vMax(ring)];
+        kM_temps = [kM_temps, kM(ring)];
+        sigma_kM_temps = [sigma_kM_temps, sigma_kM(ring)];
+        
+        
+
+    end
+    
+    subplot(1, 2, 1)
+    set(gca,'FontSize',15)
+    xlabel('1/T (1/K)')
+    
+    title('eff. reaction rate per ring')
+    %xlim([294, 312])
+    hold on
+    
+    if eyring == true
+    ylabel('log(v_{max}/(T k_M)')
+    log_rate = log(vMax_temps./(kM_temps.*kelvin_temps));
+    sigma_log_rate = sqrt((sigma_vMax_temps./vMax_temps).^2 + (sigma_kM_temps./kM_temps).^2);
+    else
+    ylabel('log(v_{max}/k_M)')
+    log_rate = log(vMax_temps./(kM_temps));
+    sigma_log_rate = sqrt((sigma_vMax_temps./vMax_temps).^2 + (sigma_kM_temps./kM_temps).^2);
+    end
+    errorbar(1./kelvin_temps, log_rate, sigma_log_rate,...
+    'o', 'MarkerSize',15, 'LineWidth',1.5, 'Color',cs(ring, :))
+
+    y_weights = 1./sigma_log_rate;
+
+    % fit exp model to v_max(r)
+    % param = [slope, intercept]
+    
+    dp = [0.01 0.001];
+    
+    p0 = [1e6 2];
+    
+    pmin = [-1e5 -1e5];
+    pmax = [1e5 1e5];
+    
+    % fit
+    
+    fit_start = 1;
+    fit_end = numel(sigma_log_rate);
+    max_iter = 1000;
+   
+    [p,X2,sigma_p,sigma_y,corr,R_sq,cvg_hst] = ...
+                     lm(@linear_model, p0,...
+                     100.*1./kelvin_temps', log_rate', y_weights(fit_start:fit_end)', dp,...
+                     pmin, pmax, [], fit_start, fit_end, max_iter);
+    
+    plot(1./kelvin_temps(fit_start:fit_end), linear_model(100.*1./kelvin_temps(fit_start:fit_end), p),...
+    'MarkerSize',15, 'LineWidth',1.5, 'Color',cs(ring, :))
+    p
+    deltaG_bykb = [deltaG_bykb, -p(1)];
+
+    subplot(1, 2, 2)
+    xlabel('r (\mu m)')
+    ylabel('\Delta G (J/mol)')
+    title('eff. activation energy')
+    set(gca,'FontSize',15)
+    hold on
+    errorbar(dist(ring), -p(1)*100*8.3, -sigma_p(1)*100*8.3,...
+        'o','MarkerSize',15, 'LineWidth',1.5, 'Color',cs(ring, :))
+    %errorbar(1./kelvin_temps, kM_temps, sigma_vMax_temps)
+        
+end
+
+cb = colorbar;
+clim([0.5 10.5-start_ring])
+title(cb, 'r (\mu m)', 'Interpreter', 'tex')
+
+cb.Ticks = linspace(1, 10-start_ring, 10-start_ring);
+cb.TickLabels = dist(start_ring:end);
+
+savefig(string(plot_path)+'ringWiseReactionRate_vs_temp.fig')
+saveas(fig, string(plot_path)+'ringWiseReactionRate_vs_temp.png')
+
 %% plot vMax and kM profiles for different temperatures
 
 % optional: rescale v_max by 1/v_max(end) and 1/T, kM by 1/T
-rescaled_params = true;
+rescaled_params = false;
 
 start_ring = 2;
 fig = figure('Renderer', 'painters', 'Position', [10 10 1000 600]);
@@ -239,6 +346,11 @@ hold on
 load(string(pp_path)+'plot_data_multiple_oxy_ranges'+string(temp_string)+'.mat');
 dist = mean(oxygen_ranges_data{1}.dist_all, 'omitnan');
 
+vMaxFit_temp_list = [];
+sigma_vMaxFit_temp_list = [];
+kMFit_temp_list = [];
+sigma_kMFit_temp_list = [];
+
 for temp=1:numel(temps)
     subplot(1, 2, 1)
     set(gca,'FontSize',15)
@@ -248,10 +360,44 @@ for temp=1:numel(temps)
         ylabel('v_{max}/(v_{max}(R) T) (\mu M/s)')
     else
         vMax = vMax_list{temp}.vMax_all(2, start_ring:end);
+        sigma_vMax = sigma_vMax_list{temp}.sigma_vMax_all(2, start_ring:end);
+
+        y_weights = 1./sigma_vMax;
+
+        % fit exp model to v_max(r)
+        % param = [amp, dec, offset]
+        
+        dp = [0 0.001 0.001];
+        
+        p0 = [0.1 1 corr_vMax_amplitude(temp)];
+        
+        pmin = [-200 0.001 -200];
+        pmax = [200 200 200];
+        
+        % fit
+        
+        fit_start = 1;
+        fit_end = numel(sigma_vMax);
+        max_iter = 1000;
+        size(dist(start_ring:end))
+        size(vMax)
+        size(y_weights)
+        size(corr_vMax_amplitude)
+        [p,X2,sigma_p,sigma_y,corr,R_sq,cvg_hst] = ...
+                         lm(@exp_model, p0,...
+                         dist(start_ring:end)', vMax', y_weights', dp,...
+                         pmin, pmax, [], fit_start, fit_end, max_iter);
+        vMaxFit_temp_list = [vMaxFit_temp_list, p];
+        sigma_vMaxFit_temp_list = [sigma_vMaxFit_temp_list, sigma_p];
+
         ylabel('v_{max} (\mu M/s)')
     end
-    plot(dist(start_ring:end), vMax,...
+    errorbar(dist(start_ring:end), vMax, sigma_vMax,...
         'o', 'MarkerSize',15, 'LineWidth',1.5, 'Color',cs(temp, :))
+    dist_range = linspace(dist(start_ring), dist(end), 100);
+    plot(dist_range, exp_model(dist_range, p),...
+        'MarkerSize',15, 'LineWidth',1.5, 'Color',cs(temp, :))
+    
     xlim([0, 36])
     xlabel('distance (\mu m)')
 
@@ -263,10 +409,39 @@ for temp=1:numel(temps)
         ylabel('k_M/T (\mu M)')
     else
         kM = kM_list{temp}.kM_all(2, start_ring:end);
+        sigma_kM = sigma_kM_list{temp}.sigma_kM_all(2, start_ring:end);
+
+        y_weights = 1./sigma_kM;
+
+        % fit exp model to v_max(r)
+        % param = [amp, dec, offset]
+        
+        dp = [0.001 0.001];
+        
+        p0 = [10 1/30];
+        
+        pmin = [-200 -200];
+        pmax = [200 200];
+        
+        % fit
+        
+        fit_start = 1;
+        fit_end = numel(sigma_kM);
+        max_iter = 1000;
+        [p,X2,sigma_p,sigma_y,corr,R_sq,cvg_hst] = ...
+                         lm(@linear_model, p0,...
+                         dist(start_ring:end)', kM', y_weights', dp,...
+                         pmin, pmax, [], fit_start, fit_end, max_iter);
+        kMFit_temp_list = [kMFit_temp_list, p];
+        sigma_kMFit_temp_list = [sigma_kMFit_temp_list, sigma_p];
+
         ylabel('k_M (\mu M)')
     end
-    plot(dist(start_ring:end), kM,...
+    errorbar(dist(start_ring:end), kM, sigma_kM,...
         'o', 'MarkerSize',15, 'LineWidth',1.5, 'Color',cs(temp, :))
+    dist_range = linspace(dist(start_ring), dist(end), 100);
+    plot(dist_range, linear_model(dist_range, p),...
+        'MarkerSize',15, 'LineWidth',1.5, 'Color',cs(temp, :))
     xlim([0, 36])
     xlabel('distance (\mu m)')
     
@@ -274,10 +449,10 @@ end
 
 cb = colorbar;
 clim([0.5 4.5])
-title(cb, 'T (°C)', 'Interpreter', 'tex')
+title(cb, 'T (K)', 'Interpreter', 'tex')
 
 cb.Ticks = linspace(1, 4, 4);
-cb.TickLabels = temps;
+cb.TickLabels = kelvin_temps;
 
 if rescaled_params==true
     savefig(string(plot_path)+'vMaxKm_vs_dist_temp_rescaled.fig')
@@ -285,4 +460,75 @@ if rescaled_params==true
 else
     savefig(string(plot_path)+'vMaxKm_vs_dist_temp.fig')
     saveas(fig, string(plot_path)+'vMaxKm_vs_dist_temp.png')
-end    
+end
+
+savefig(string(plot_path)+'JoxmmParamProfile_vs_temp.fig')
+saveas(fig, string(plot_path)+'JoxmmParamProfile_vs_temp.png')
+
+%% visualise dependency of k_m(r) fit parameters on temperature
+
+fig = figure('Renderer', 'painters', 'Position', [10 10 1000 600]);
+set(gca,'FontSize',15)
+
+for temp_ind=1:numel(temps)
+    subplot(1, 2, 1)
+    set(gca,'FontSize',15)
+    xlim([273.5+20 270+40])
+    xlabel("T (K)")
+    ylabel("k_M(r) linear fit offset (\mu M)")
+    hold on
+    temp = kelvin_temps(temp_ind);
+    % slope
+    errorbar(temp, kMFit_temp_list(1, temp_ind),sigma_kMFit_temp_list(1, temp_ind),...
+          'o', 'MarkerSize',15, 'LineWidth',1.5, 'Color',cs(temp_ind, :))
+    
+    subplot(1, 2, 2)
+    set(gca,'FontSize',15)
+    xlim([273.5+20 270+40])
+    xlabel("T (K)")
+    ylabel("k_M(r) linear fit slope (\mu M / \mu m)")
+    hold on
+    % offset
+    errorbar(temp, kMFit_temp_list(2, temp_ind),sigma_kMFit_temp_list(2, temp_ind),...
+        'o', 'MarkerSize',15, 'LineWidth',1.5, 'Color',cs(temp_ind, :))
+end
+
+%% visualise dependency of v_max fit parameters on temperature
+
+fig = figure('Renderer', 'painters', 'Position', [10 10 1800 600]);
+set(gca,'FontSize',15)
+
+for temp_ind=1:numel(temps)
+    subplot(1, 3, 1)
+    set(gca,'FontSize',15)
+    xlim([273.5+20 270+40])
+    xlabel("T (K)")
+    ylabel("v_{max}(r) exp fit amplitude (\mu M/s)")
+    hold on
+    temp = kelvin_temps(temp_ind);
+    % amplitude
+    errorbar(temp, vMaxFit_temp_list(1, temp_ind),sigma_vMaxFit_temp_list(1, temp_ind),...
+          'o', 'MarkerSize',15, 'LineWidth',1.5, 'Color',cs(temp_ind, :))
+    
+    subplot(1, 3, 2)
+    set(gca,'FontSize',15)
+    xlim([273.5+20 270+40])
+    xlabel("T (K)")
+    ylabel("v_{max}(r) exp fit decay length (\mu m)")
+    hold on
+    % decay length
+    errorbar(temp, 1./vMaxFit_temp_list(2, temp_ind),sigma_vMaxFit_temp_list(2, temp_ind)./vMaxFit_temp_list(2, temp_ind).^2,...
+        'o', 'MarkerSize',15, 'LineWidth',1.5, 'Color',cs(temp_ind, :))
+
+    subplot(1, 3, 3)
+    set(gca,'FontSize',15)
+    xlim([273.5+20 270+40])
+    xlabel("T (K)")
+    ylabel("v_{max}(r) exp fit offset (\mu M/s)")
+    hold on
+    % offset
+    errorbar(temp, vMaxFit_temp_list(3, temp_ind),sigma_vMaxFit_temp_list(3, temp_ind),...
+        'o', 'MarkerSize',15, 'LineWidth',1.5, 'Color',cs(temp_ind, :))
+end
+
+corr_vMax_amplitude = vMaxFit_temp_list(3, :);

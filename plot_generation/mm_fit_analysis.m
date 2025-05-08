@@ -1,6 +1,15 @@
-%% designation of oxygen ranges to analyse
+%% loading of mito density, temperatures, solubilities, diffusivities
 clear all;
 clc;
+
+load("./mito_density_oocytes/mito_density.mat")
+mean_mito_density = mean(ratio_num_all_mitotracker, 1);
+
+load('exp_solubilities.mat')
+load('exp_temperatures.mat')
+load("exp_diffusivities.mat")
+
+%% designation of oxygen ranges to analyse
 
 oxygen_ranges={'run_oxy_l0_h0p1', 'run_oxy_l0p1_h0p2', 'run_oxy_l0p2_h0p3', 'run_oxy_l0p3_h0p4',...
                'run_oxy_l0p4_h0p6', 'run_oxy_l0p6_h0p8',...
@@ -16,28 +25,21 @@ num_oxygen_ranges={[0, 0.1], ...
                    [1.2, 1.4], [1.4, 1.6], [1.6, 1.8], [1.8, 2.0],...
                    [2.0, 2.8], [2.8, 3.6], [3.6, 4.4], [4.4, 5.2]};
 
-temp_resolved = false;
-pp_path = '../data/EXP_published/postprocessing_results/';
-plot_path = '../data/EXP_published/plots/';
-% temp_resolved = true;
-% pp_path = '../data/EXP_temperatureResolved/postprocessing_results/';
-% plot_path = '../data/EXP_temperatureResolved/plots/';
+% temp_resolved = false;
+% pp_path = '../data/EXP_published/postprocessing_results/';
+% plot_path = '../data/EXP_published/plots/';
+temp_resolved = true;
+pp_path = '../data/EXP_temperatureResolved/postprocessing_results/';
+plot_path = '../data/EXP_temperatureResolved/plots/';
+
 if temp_resolved==true
+    temp_ind = 1;
     temp_string = '_T'+string(temperature(temp_ind))+'C';
 else 
     temp_string = '';
 end
 
-%% loading of mito density, temperatures, solubilities, diffusivities
-load("./mito_density_oocytes/mito_density.mat")
-mean_mito_density = mean(ratio_num_all_mitotracker, 1);
-
-load('exp_solubilities.mat')
-load('exp_temperatures.mat')
-load("exp_diffusivities.mat")
-
 %% loading of read-in data
-temp_ind = 3;
 
 load(string(pp_path)+'plot_data_multiple_oxy_ranges'+string(temp_string)+'.mat');
 precise_oxygen_levels = [];
@@ -189,7 +191,7 @@ clim([0.5 10.5])
 title(cb, 'r (\mu m)', 'Interpreter', 'tex')
 dist_per_ring(:, 1)
 cb.Ticks = linspace(1, 10, 10);
-cb.TickLabels = round(mean(dist_all, 1), 2);
+cb.TickLabels = round(mean(dist_per_ring, 2), 2);
 
 savefig(string(plot_path)+'Jox_vs_coxy_mmFit'+string(temp_string)+'.fig')
 saveas(fig, string(plot_path)+'Jox_vs_coxy_mmFit'+string(temp_string)+'.png')
