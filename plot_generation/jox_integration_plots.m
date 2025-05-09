@@ -18,28 +18,31 @@ num_oxygen_ranges={[0, 0.1], ...
                    [4.4, 5.2]};
 
 temp_resolved = false;
+data_path = "/home/mx/mitoFluxGradients/data/";
 pp_path = '../data/EXP_published/postprocessing_results/';
 plot_path = '../data/EXP_published/plots/';
 % temp_resolved = true;
+% data_path = "/home/mx/mitoFluxGradients/data/";
 % pp_path = '../data/EXP_temperatureResolved/postprocessing_results/';
 % plot_path = '../data/EXP_temperatureResolved/plots/';
+
+%% loading of mito density, temperatures, solubilities, diffusivities
+load(data_path + "mito_density_oocytes/mito_density.mat")
+mean_mito_density = mean(ratio_num_all_mitotracker, 1);
+
+load(data_path + "exp_solubilities.mat")
+load(data_path + "exp_temperatures.mat")
+load(data_path + "exp_diffusivities.mat")
+
 if temp_resolved==true
+    temp_ind = 2;
     temp_string = '_T'+string(temperature(temp_ind))+'C';
 else 
     temp_string = '';
 end
-
-%% loading of mito density, temperatures, solubilities, diffusivities
-load("./mito_density_oocytes/mito_density.mat")
-mean_mito_density = mean(ratio_num_all_mitotracker, 1);
-
-load('exp_solubilities.mat')
-load('exp_temperatures.mat')
-load("exp_diffusivities.mat")
 %% loading of read-in (experimental) data
 
 % choose which temperature to plot analysis for (from T=[22, 28, 31, 36]C)
-temp_ind = 1;
 load(string(pp_path)+'plot_data_multiple_oxy_ranges'+string(temp_string)+'.mat');
 
 precise_oxygen_levels = [];
@@ -48,17 +51,27 @@ for oxy_ind=1:numel(oxygen_ranges)
     precise_oxygen_levels = [precise_oxygen_levels, oxygen_ranges_data{oxy_ind}.o2_levels];
     sigma_precise_oxygen_levels = [sigma_precise_oxygen_levels, mean(oxygen_ranges_data{oxy_ind}.sigma_o2_levels, 'omitnan')];
 end
-precise_oxygen_levels = solubility(temp_ind).*precise_oxygen_levels./10;
-sigma_precise_oxygen_levels = solubility(temp_ind).*sigma_precise_oxygen_levels./10;
+if temp_resolved==true
+precise_oxygen_levels = solubility(temp_ind).*precise_oxygen_levels./20.946;
+sigma_precise_oxygen_levels = solubility(temp_ind).*sigma_precise_oxygen_levels./20.946;
 sigma_precise_oxygen_levels(sigma_precise_oxygen_levels==0) = mean(sigma_precise_oxygen_levels);
+else
+precise_oxygen_levels = (213.5/20.946).*precise_oxygen_levels;
+sigma_precise_oxygen_levels = (213.5/20.946).*sigma_precise_oxygen_levels;
+sigma_precise_oxygen_levels(sigma_precise_oxygen_levels==0) = mean(sigma_precise_oxygen_levels);
+end
+
 
 %% reshape raw data for easier handling
 
 % choose number of rings used in spatial analysis
 n_rings = 10;
 
-% determine range of diffusion coefficients, for which to calculate
-diff_coeffs = diffusivity(temp_ind);
+if temp_resolved==true
+diff_coeffs = diffusivity(temp_ind);%[1600, 1700, 1800, 1900, 2000, 2100, 2150, 2200, 2250, 2300, 2400, 2450, 2500, 2550, 2600, 2700, 2800, 2900, 3000, 3100, 3200, 3300, 3400, 3500];
+else
+diff_coeffs = diffusivity(4);
+end
 
 % first, the data (J_ox, r) is reshaped into matrices of dimension
 % (n_oxy_levels)x(n_rings) for easier access
@@ -272,27 +285,27 @@ errorbar(data(1, 2:end), vMax_all(2, 2:end), sigma_vMax_all(2, 2:end),...
          sigma_vMax_all(2, 2:end),'o', 'MarkerSize',10,...
          'LineWidth',1.5, 'Color','blue')
 
-y_weights = 1./sigma_vMax_all(2, 2:end);
+y_weights = 1./sigma_vMax_all(2, 1:end);
 
 % set parameters to fit, increment and initial values (LAMBDA LINEAR MODEL)
 % param = [vmax, km]
 
 dp = [0.001 0.001 0.001];
 
-p0 = [0.001 0.1 65];
+p0 = [65 0.0001 0];
 
-pmin = [-200 -200 -200];
+pmin = [-200 1e-8 -200];
 pmax = [200 200 200];
 
 % fit
 
-fit_start = 1;
-fit_end = numel(sigma_vMax_all(1, 2:end));
+fit_start = 2;
+fit_end = 10;
 max_iter = 1000;
 
 [p,X2,sigma_p,sigma_y,corr,R_sq,cvg_hst] = ...
                  lm(@exp_model, p0,...
-                 data(1, 2:end)', vMax_all(2, 2:end)', y_weights, dp,...
+                 data(1, 1:end)', vMax_all(2, 1:end)', y_weights(fit_start:fit_end), dp,...
                  pmin, pmax, [], fit_start, fit_end, max_iter);
 r_range = linspace(data(1, 2), data(1, end), 100);
 legendstring = 'a*exp(r/b)+c (a='+string(round(p(1), 3))+',b='+string(round(1/p(2), 2))+',c='+string(round(p(3), 2))+')';
@@ -537,6 +550,12 @@ linRD_fit_sigma_params = linRD_fit{2};
 linRD_dec = linRD_fit_params(3, :);
 sigma_linRD_dec = linRD_fit_sigma_params(3, :);
 
+% load J_ox decay length obtained by sinh fit
+jox_fit = load(string(pp_path)+'sinhDecayLength_jox'+string(temp_string)+'.mat');
+jox_sigmafit = load(string(pp_path)+'sigma_sinhDecayLength_jox'+string(temp_string)+'.mat');
+jox_sinhDec = jox_fit.("decay_lengths");
+sigma_jox_sinhDec = jox_sigmafit.("sigma_decay_lengths");
+
 % load J_ox decay length obtained by log-lin fit
 joxEmp_fit = load(string(pp_path)+'decayLength_joxEmp'+string(temp_string)+'.mat');
 joxEmp_sigmafit = load(string(pp_path)+'sigma_decayLength_joxEmp'+string(temp_string)+'.mat');
@@ -561,7 +580,7 @@ fig = figure(5);
 hold on
 
 % plot J_ox decay length obtained by sinh fit
-errorbar(precise_oxygen_levels, linRD_dec, sigma_linRD_dec, sigma_linRD_dec,...
+errorbar(precise_oxygen_levels, jox_sinhDec, sigma_jox_sinhDec, sigma_jox_sinhDec,...
          'o', 'Color','green', ...
          'MarkerSize',15, 'LineWidth',1.5, 'DisplayName','J_{ox} sinh fit')
 
@@ -603,8 +622,8 @@ cs = viridis(16);
 colormap(cs)
 
 for oxy=1:16
-errorbar(coxy_sinhDec(oxy), linRD_dec(oxy), sigma_coxy_sinhDec(oxy), sigma_coxy_sinhDec(oxy),...
-    sigma_linRD_dec(oxy), sigma_linRD_dec(oxy),...
+errorbar(coxy_sinhDec(oxy), jox_sinhDec(oxy), sigma_coxy_sinhDec(oxy), sigma_coxy_sinhDec(oxy),...
+    sigma_jox_sinhDec(oxy), sigma_jox_sinhDec(oxy),...
     'o', 'Color', cs(oxy, :),...
     'MarkerSize',15, 'LineWidth',1.5, 'HandleVisibility','off')
 end
@@ -621,17 +640,18 @@ pmax = [200 2000];
 %empty optional params
 c = [];
 
-fit_start = 1;
-fit_end = 4;
+fit_start = 3;
+fit_end = 10;
 max_iter = 1000;
 
-y_weights = 1./sigma_linRD_dec;
+y_weights = 1./sigma_jox_sinhDec;
 [p,X2,sigma_p,sigma_y,corr,R_sq,cvg_hst] = ...
                  lm(@linear_model, p0,...
-                 coxy_sinhDec', linRD_dec', y_weights(fit_start:fit_end), dp,...
+                 coxy_sinhDec', jox_sinhDec', y_weights(fit_start:fit_end), dp,...
                  pmin, pmax, c, fit_start, fit_end, max_iter);
 % set fitrange according to values of coxy_sinhDec at fit_start/fit_end
-fitrange = linspace(coxy_sinhDec(fit_start), coxy_sinhDec(fit_end), 100);
+
+fitrange = linspace(min(coxy_sinhDec), max(coxy_sinhDec), 100);
 
 plot(fitrange, linear_model(fitrange, p), 'LineWidth', 1.5, 'Color','red', ...
     'DisplayName','lin. fit slope m='+string(p(1)))

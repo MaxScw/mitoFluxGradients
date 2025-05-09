@@ -30,11 +30,11 @@ for t=1:numel(temps)
     linRD_dec = linRD_fit_params(3, :);
     sigma_linRD_dec = linRD_fit_sigma_params(3, :);
     
-    % load J_ox decay lengths from log lin fit
-    % joxEmp = load('decayLength_joxEmp_T'+string(temps(t))+'C.mat');
-    % sigma_joxEmp = load('sigma_decayLength_joxEmp_T'+string(temps(t))+'C.mat');
-    % joxEmp_dec = joxEmp.('decay_lengths');
-    % sigma_joxEmp_dec = sigma_joxEmp.('sigma_decay_lengths');
+    % load J_ox decay length obtained by sinh fit
+    jox_fit = load(string(pp_path)+'sinhDecayLength_jox'+string(temp_string)+'.mat');
+    jox_sigmafit = load(string(pp_path)+'sigma_sinhDecayLength_jox'+string(temp_string)+'.mat');
+    jox_sinhDec = jox_fit.("decay_lengths");
+    sigma_jox_sinhDec = jox_sigmafit.("sigma_decay_lengths");
     
     % load c_oxy decay lengths from sinh fit
     coxy_sinhFit = load(string(pp_path)+'sinhDecayLength_coxy'+string(temp_string)+'.mat');
@@ -49,8 +49,8 @@ for t=1:numel(temps)
     sigma_vMax = load(string(pp_path)+'v_max_profiles_corrected_sigma'+string(temp_string)+'.mat');
 
     % appen loaded data to list
-    jox_dec_list{end+1} = linRD_dec;
-    sigma_jox_dec_list{end+1} = sigma_linRD_dec;
+    jox_dec_list{end+1} = jox_sinhDec;
+    sigma_jox_dec_list{end+1} = sigma_jox_sinhDec;
     % jox_dec_list{end+1} = joxEmp_dec;
     % sigma_jox_dec_list{end+1} = sigma_joxEmp_dec;
 
@@ -147,7 +147,7 @@ cb.Ticks = linspace(1, 4, 4);
 cb.TickLabels = kelvin_temps;
 
 savefig(string(plot_path)+'LambdaJox_vs_lambdaCox_tempComp.fig')
-saveas(fig, string(plot_path)+'LambdaJox_vs_lambdaCox_tempComp.fig')
+saveas(fig, string(plot_path)+'LambdaJox_vs_lambdaCox_tempComp.png')
 
 %% plot Jox decay length at maximum oxygen as a function of temperature
 
@@ -223,7 +223,7 @@ title('whole-cell average J_{ox} versus temperature', 'Interpreter','tex')
 savefig(string(plot_path)+'ringAverageJox_vs_temp.fig')
 saveas(fig, string(plot_path)+'ringAverageJox_vs_temp.png')
 
-%% plot vMax and kM temperature profiles for different rings
+%% plot eff. reaction rate as function of inverse temperature
 fig2 = figure('Renderer', 'painters', 'Position', [10 10 1200 600]);
 start_ring = 2;
 cs = parula(10);
@@ -327,7 +327,7 @@ cb.Ticks = linspace(1, 10-start_ring, 10-start_ring);
 cb.TickLabels = dist(start_ring:end);
 
 savefig(string(plot_path)+'ringWiseReactionRate_vs_temp.fig')
-saveas(fig, string(plot_path)+'ringWiseReactionRate_vs_temp.png')
+saveas(fig2, string(plot_path)+'ringWiseReactionRate_vs_temp.png')
 
 %% plot vMax and kM profiles for different temperatures
 
@@ -369,7 +369,7 @@ for temp=1:numel(temps)
         
         dp = [0 0.001 0.001];
         
-        p0 = [0.1 1 corr_vMax_amplitude(temp)];
+        p0 = [0.1 1 40];
         
         pmin = [-200 0.001 -200];
         pmax = [200 200 200];
@@ -382,7 +382,7 @@ for temp=1:numel(temps)
         size(dist(start_ring:end))
         size(vMax)
         size(y_weights)
-        size(corr_vMax_amplitude)
+        
         [p,X2,sigma_p,sigma_y,corr,R_sq,cvg_hst] = ...
                          lm(@exp_model, p0,...
                          dist(start_ring:end)', vMax', y_weights', dp,...

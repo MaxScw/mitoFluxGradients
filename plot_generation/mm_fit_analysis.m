@@ -1,15 +1,6 @@
-%% loading of mito density, temperatures, solubilities, diffusivities
-clear all;
-clc;
-
-load("./mito_density_oocytes/mito_density.mat")
-mean_mito_density = mean(ratio_num_all_mitotracker, 1);
-
-load('exp_solubilities.mat')
-load('exp_temperatures.mat')
-load("exp_diffusivities.mat")
-
 %% designation of oxygen ranges to analyse
+clc
+clear all
 
 oxygen_ranges={'run_oxy_l0_h0p1', 'run_oxy_l0p1_h0p2', 'run_oxy_l0p2_h0p3', 'run_oxy_l0p3_h0p4',...
                'run_oxy_l0p4_h0p6', 'run_oxy_l0p6_h0p8',...
@@ -26,14 +17,25 @@ num_oxygen_ranges={[0, 0.1], ...
                    [2.0, 2.8], [2.8, 3.6], [3.6, 4.4], [4.4, 5.2]};
 
 % temp_resolved = false;
+% data_path = "/home/mx/mitoFluxGradients/data/";
 % pp_path = '../data/EXP_published/postprocessing_results/';
 % plot_path = '../data/EXP_published/plots/';
 temp_resolved = true;
+data_path = "/home/mx/mitoFluxGradients/data/";
 pp_path = '../data/EXP_temperatureResolved/postprocessing_results/';
 plot_path = '../data/EXP_temperatureResolved/plots/';
 
+%% loading of mito density, temperatures, solubilities, diffusivities
+
+load(data_path + "mito_density_oocytes/mito_density.mat")
+mean_mito_density = mean(ratio_num_all_mitotracker, 1);
+
+load(data_path + 'exp_solubilities.mat')
+load(data_path + 'exp_temperatures.mat')
+load(data_path + "exp_diffusivities.mat")
+
 if temp_resolved==true
-    temp_ind = 1;
+    temp_ind = 2;
     temp_string = '_T'+string(temperature(temp_ind))+'C';
 else 
     temp_string = '';
@@ -83,7 +85,7 @@ end
 for ring=1:10
     jox = jox_per_ring(ring, :);
     sigma_jox = sigma_jox_per_ring(ring, :);
-    y_weights = 1./sigma_jox
+    y_weights = 1./sigma_jox;
 
     oxygen_levels = corr_oxy(:, ring);
     
@@ -94,7 +96,7 @@ for ring=1:10
 
     p0 = [jox(end) precise_oxygen_levels(end)];
 
-    pmin = [0 0];
+    pmin = [0 1e-5];
     pmax = [200 200];
     
     % fit
@@ -130,7 +132,7 @@ sigma_flux = [];
 fitflux = [];
 hold on;
 %average
-for ring=1:7
+for ring=1
     flux = [flux; jox_per_ring(ring, :)];
     sigma_flux = [sigma_flux; sigma_jox_per_ring(ring, :)];
     fitflux = [fitflux; mm_flux(oxy_range, fit_params(:, ring), [])];
@@ -149,7 +151,7 @@ sigma_flux = [];
 fitflux = [];
 hold on
 %average
-for ring=8
+for ring=2
     flux = [flux; jox_per_ring(ring, :)];
     sigma_flux = [sigma_flux; sigma_jox_per_ring(ring, :)];
     fitflux = [fitflux; mm_flux(oxy_range, fit_params(:, ring), [])];
@@ -168,7 +170,7 @@ flux = [];
 sigma_flux = [];
 fitflux = [];
 %average
-for ring=9:10
+for ring=3
     flux = [flux; jox_per_ring(ring, :)];
     sigma_flux = [sigma_flux; sigma_jox_per_ring(ring, :)];
     fitflux = [fitflux; mm_flux(oxy_range, fit_params(:, ring), [])];

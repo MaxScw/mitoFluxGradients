@@ -29,7 +29,7 @@ load('exp_temperatures.mat')
 temp_ind = 1;
 
 if temp_resolved==true
-    temp_string = '_T'+string(temperature(temp_ind))+'C';
+    temp_string = '_T'+string(temperature(temp_ind))+'C'
 else 
     temp_string = '';
 end
@@ -38,9 +38,6 @@ load(string(pp_path)+'plot_data_multiple_oxy_ranges'+string(temp_string)+'.mat')
 precise_oxygen_levels = [];
 sigma_precise_oxygen_levels = [];
 for oxy_ind=1:numel(oxygen_ranges)
-    if oxy_ind == 3
-        oxygen_ranges_data{oxy_ind}.o2_levels
-    end
     precise_oxygen_levels = [precise_oxygen_levels, oxygen_ranges_data{oxy_ind}.o2_levels];
     sigma_precise_oxygen_levels = [sigma_precise_oxygen_levels, oxygen_ranges_data{oxy_ind}.sigma_o2_levels];
 end
@@ -57,7 +54,8 @@ colormap(cs)
 
 % subplot(1, 2, 1)
 hold on;
-for k=[3]%1:numel(oxygen_ranges)
+for k=1:numel(oxygen_ranges)
+    oxygen_ranges(k)
     dist_all=oxygen_ranges_data{k}.dist_all;
     jox_cell_kn_all=oxygen_ranges_data{k}.jox_cell_kn_all;
 
@@ -69,7 +67,7 @@ for k=[3]%1:numel(oxygen_ranges)
     xlabel('distance to oocyte center (\mu m)');
     ylabel('inferred J_{ox} (\mu M/s)');
     
-    ylim([-20, 80])
+    %ylim([-20, 80])
 
     set(gca,'FontSize',15);
 end

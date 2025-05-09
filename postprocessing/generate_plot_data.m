@@ -17,32 +17,32 @@ num_oxygen_ranges={[0, 0.1], ...
                    [2.0, 2.8], [2.8, 3.6], [3.6, 4.4],... 
                    [4.4, 5.2]};
 
-load('exp_solubilities.mat')
-load('exp_temperatures.mat')
+load('/home/mx/mitoFluxGradients/plot_generation/exp_solubilities.mat')
+load('/home/mx/mitoFluxGradients/plot_generation/exp_temperatures.mat')
 
 % temp_resolved = false;
 % pp_path = '../data/EXP_published/postprocessing_results/';
 % plot_path = '../data/EXP_published/plots/';
 
 temp_resolved = true;
-pp_path = '../data/EXP_temperatureResolved/postprocessing_results/';
-plot_path = '../data/EXP_temperatureResolved/plots/';
+pp_path = '/home/mx/mitoFluxGradients/data/EXP_temperatureResolved/postprocessing_results/';
+plot_path = '/home/mx/mitoFluxGradients/data/EXP_temperatureResolved/plots';
 temp_ind = 1;
 if temp_resolved==true
     temp_string = '_T'+string(temperature(temp_ind))+'C';
+    dpath = '/home/mx/mitoFluxGradients/data/EXP_temperatureResolved/FLIM_fitting_results/temp_'+string(temperature(temp_ind))+'C'
 else 
     temp_string = '';
 end
 
-dpath = '../data/EXP_temperatureResolved/temp_22C';
+
 
 %% read-in of data (not neccessary if read-in data was loaded in cell above)
-dpath = 'temp_22C';
 
 for oxy_ind=1:numel(oxygen_ranges)
     oxygen_ranges{oxy_ind};
-    filename_cellular_kn=dir([dpath, '/', oxygen_ranges{oxy_ind},'/', '*_jox_in_rings_cellular_kn.mat']);
-    filename_irr_decay_dist_in_rings=dir([dpath, '/', oxygen_ranges{oxy_ind},'/', '*_irr_decay_dist_in_rings.mat']);
+    filename_cellular_kn=dir(dpath + '/' + oxygen_ranges{oxy_ind} + '/' + '*_jox_in_rings_cellular_kn.mat');
+    filename_irr_decay_dist_in_rings=dir(dpath + '/' + oxygen_ranges{oxy_ind} + '/' + '*_irr_decay_dist_in_rings.mat');
     oxy.dist_all=[];
     oxy.jox_cell_kn_all=[];
     oxy.o2_levels=[];
@@ -50,9 +50,9 @@ for oxy_ind=1:numel(oxygen_ranges)
 
     for i=1:length(filename_cellular_kn)
         % filename_cellular_kn(i).name
-        load([dpath, '/', oxygen_ranges{oxy_ind},'/', filename_cellular_kn(i).name]);
+        load(dpath + '/' + oxygen_ranges{oxy_ind} + '/' + filename_cellular_kn(i).name);
         
-        load([dpath, '/', oxygen_ranges{oxy_ind},'/', filename_irr_decay_dist_in_rings(i).name]);
+        load(dpath + '/' + oxygen_ranges{oxy_ind} + '/' + filename_irr_decay_dist_in_rings(i).name);
 
         temp_02_levels = [];
         for fls=1:numel(flim_struct)
