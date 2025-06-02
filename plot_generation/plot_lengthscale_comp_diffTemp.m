@@ -176,6 +176,25 @@ title('\lambda( J_{ox}) at maximum oxygen versus temperature', 'Interpreter','te
 savefig(string(plot_path)+'JoxMaxCoxy_vs_temp.fig')
 saveas(fig, string(plot_path)+'JoxMaxCoxy_vs_temp.fig')
 
+
+%%
+fig2 = figure('Renderer', 'painters', 'Position', [10 10 700 500]);
+hold on
+for temp=1:numel(temps)
+    % load corrected oxygen levels
+    temp_string = '_T'+string(temps(temp))+'C';
+    load(string(pp_path)+'cOxy_corr'+string(temp_string)+'.mat')
+    
+    errorbar(cOxy_all(2, 1:end, end), jox_dec_list{temp}, sigma_jox_dec_list{temp}, ...
+        sigma_jox_dec_list{temp}, 'o', 'Color',cs(temp, :), 'MarkerSize',15, 'LineWidth',1.5)
+    
+
+
+end
+
+set(gca,'FontSize',15)
+xlabel('external oxygen')
+ylabel('\lambda_{J_{ox}} (\mu m)')
 %% plot of ring-averaged (whole-cell) Jox as a function of temperature
 
 % get whole-cell Jox by weighted average over Jox(r) for all temperatures
@@ -232,7 +251,7 @@ colormap(cs)
 load(string(pp_path)+'plot_data_multiple_oxy_ranges'+string(temp_string)+'.mat');
 dist = mean(oxygen_ranges_data{1}.dist_all, 'omitnan');
 
-eyring = true;
+km = true;
 
 deltaG_bykb = [];
 
@@ -267,14 +286,14 @@ for ring=start_ring:10
     %xlim([294, 312])
     hold on
     
-    if eyring == true
-    ylabel('log(v_{max}/(T k_M)')
-    log_rate = log(vMax_temps./(kM_temps.*kelvin_temps));
-    sigma_log_rate = sqrt((sigma_vMax_temps./vMax_temps).^2 + (sigma_kM_temps./kM_temps).^2);
+    if km == true
+    ylabel('log(v_{max}/T)')
+    log_rate = log(vMax_temps./(kelvin_temps));
+    sigma_log_rate = sqrt((sigma_vMax_temps./vMax_temps).^2 );
     else
-    ylabel('log(v_{max}/k_M)')
-    log_rate = log(vMax_temps./(kM_temps));
-    sigma_log_rate = sqrt((sigma_vMax_temps./vMax_temps).^2 + (sigma_kM_temps./kM_temps).^2);
+    ylabel('log(k_M/T)')
+    log_rate = log(kM_temps./(kelvin_temps));
+    sigma_log_rate = sqrt((sigma_kM_temps./kM_temps).^2);
     end
     errorbar(1./kelvin_temps, log_rate, sigma_log_rate,...
     'o', 'MarkerSize',15, 'LineWidth',1.5, 'Color',cs(ring, :))
@@ -326,9 +345,15 @@ title(cb, 'r (\mu m)', 'Interpreter', 'tex')
 cb.Ticks = linspace(1, 10-start_ring, 10-start_ring);
 cb.TickLabels = dist(start_ring:end);
 
-savefig(string(plot_path)+'ringWiseReactionRate_vs_temp.fig')
-saveas(fig2, string(plot_path)+'ringWiseReactionRate_vs_temp.png')
-
+if km == true
+savefig(string(plot_path)+'ringWiseKmReactionRate_vs_temp.fig')
+saveas(fig2, string(plot_path)+'ringWiseKmReactionRate_vs_temp.png')
+else
+savefig(string(plot_path)+'ringWiseVmaxReactionRate_vs_temp.fig')
+saveas(fig2, string(plot_path)+'ringWiseVmaxReactionRate_vs_temp.png')
+end
+%%
+p
 %% plot vMax and kM profiles for different temperatures
 
 % optional: rescale v_max by 1/v_max(end) and 1/T, kM by 1/T

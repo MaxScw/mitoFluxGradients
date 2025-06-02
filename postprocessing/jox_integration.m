@@ -17,14 +17,14 @@ num_oxygen_ranges={[0, 0.1], ...
                    [2.0, 2.8], [2.8, 3.6], [3.6, 4.4],... 
                    [4.4, 5.2]};
 
-% temp_resolved = false;
-% data_path = "/home/mx/mitoFluxGradients/data/";
-% pp_path = "/home/mx/mitoFluxGradients/data/EXP_published/postprocessing_results/";
-% plot_path = "/home/mx/mitoFluxGradients/data/EXP_published/plots/";
-temp_resolved = true;
+temp_resolved = false;
 data_path = "/home/mx/mitoFluxGradients/data/";
-pp_path = "../data/EXP_temperatureResolved/postprocessing_results/";
-plot_path = "../data/EXP_temperatureResolved/plots/";
+pp_path = "/home/mx/mitoFluxGradients/data/EXP_published/postprocessing_results/";
+plot_path = "/home/mx/mitoFluxGradients/data/EXP_published/plots/";
+% temp_resolved = true;
+% data_path = "/home/mx/mitoFluxGradients/data/";
+% pp_path = "../data/EXP_temperatureResolved/postprocessing_results/";
+% plot_path = "../data/EXP_temperatureResolved/plots/";
 
 %% loading of mito density, temperatures, solubilities, diffusivities
 

@@ -35,7 +35,7 @@ load(data_path + "exp_temperatures.mat")
 load(data_path + "exp_diffusivities.mat")
 
 if temp_resolved==true
-    temp_ind = 2;
+    temp_ind = 4;
     temp_string = '_T'+string(temperature(temp_ind))+'C';
 else 
     temp_string = '';
@@ -137,21 +137,21 @@ colormap(cs);
 subplot(1, 2, 1)
 hold on
 for ind=[1, 2, 3, 4, 5, 7, 10, 12, 14, 16]
-    plot(r_data(ind, :), squeeze(cOxy_all(2, ind, :)), 'o',...
+    plot(r_data(ind, :), squeeze(cOxy_all(2, ind, :))./squeeze(cOxy_all(2, ind, end)), 'o',...
          'Color',cs(ind, :), 'MarkerSize',10, 'LineWidth',1.5)
 end
 xlabel('distance from cell center (\mu m)')
-ylabel('log c(c^*, r)')
+ylabel('c(c^*, r)/c(c^*, R)')
 set(gca,'FontSize',15)
-title('log. subcell. oxygen levels')
+title('norm. subcell. oxygen levels')
 
 cb = colorbar;
 clim([1 16])
 title(cb, 'c^* (\mu M)', 'Interpreter', 'tex')
 cb.Ticks = [1, 2, 3, 4, 5, 7, 10, 12, 14, 16];
 cb.TickLabels = round(precise_oxygen_levels([1, 2, 3, 4, 5, 7, 10, 12, 14, 16]), 2);
-% ylim([0.5, 5])
-yscale('log')
+ylim([0.65, 1.01])
+%yscale('log')
 xlim([0, 36])
 
 subplot(1, 2, 2)
@@ -420,10 +420,11 @@ saveas(fig, string(plot_path)+'vMaxKmCorr_vs_dist'+string(temp_string)+'.png')
 
 %% plot J_ox(r) predicted from v_max(r), k_m(r)
 
+% plot integrated jox for all oxygen levels
 fig = figure('Renderer', 'painters', 'Position', [10 10 600 400]);
 
 start_ring = 2;
-cs = viridis(16);
+cs = flip(viridis(20));
 colormap(cs)
 X2 = [];
 
@@ -456,13 +457,61 @@ ylabel('predicted J_{ox} (\mu M/s)');
 set(gca,'FontSize',15);
 
 cb = colorbar;
-clim([precise_oxygen_levels(1) precise_oxygen_levels(end)])
+clim([1 16])
 title(cb, 'c^* (\mu M)', 'Interpreter', 'tex')
-cb.Ticks = round(linspace(precise_oxygen_levels(1), precise_oxygen_levels(end), 10), 3);
+
+cb.Ticks = linspace(1, 16, 16);
+cb.TickLabels = round(precise_oxygen_levels, 2);
 
 savefig(string(plot_path)+'Jox_vs_dist_int'+string(temp_string)+'.fig')
 saveas(fig, string(plot_path)+'Jox_vs_dist_int'+string(temp_string)+'.png')
 
+
+% plot integrated jox for maximally different oxygen levels
+fig = figure('Renderer', 'painters', 'Position', [10 10 600 400]);
+
+start_ring = 2;
+cs = flip(viridis(20));
+colormap(cs)
+X2 = [];
+
+%title('predicted J_{ox}(v_{max}(r), k_{m}(r), c(r))')
+% plot all oxygen ranges together 
+for oxy=[1, 2, 16]
+    hold on
+    % plot(r_data(oxy, :), squeeze(jox_pred(2, oxy, :)), 'Color',cs(oxy, :), ...
+    %      'LineWidth',1.5)
+    errorbar(r_data(oxy, 2:end), jox_data(oxy, 2:end), sigma_jox_data(oxy, 2:end), ...
+        sigma_jox_data(oxy, 2:end),'o', 'Color',cs(oxy, :), 'LineWidth',1.5, ...
+        'MarkerSize', 10)
+
+    %joxPred = squeeze(cOxy_all(2, oxy, :)).*vMax_all(2, :)'./(squeeze(cOxy_all(2, oxy, :))+ kM_all(2, :)');
+    joxPred = squeeze(cOxy_all(2, oxy, :)).*exp_model(r_data(oxy, :), p_vmax)'./(squeeze(cOxy_all(2, oxy, :))+ linear_model(r_data(oxy, :)', P_km));
+    plot(r_data(oxy, start_ring:end), joxPred(start_ring:end),...
+         'Color',cs(oxy, :), 'LineWidth',1.5)
+
+    chi_sq = sum(((jox_data(oxy, :) - joxPred').^2)./jox_data(oxy, :));
+
+    X2 = [X2 chi_sq];
+end
+
+xlim([4, 36])
+ylim([-25, 140])
+mean(X2)
+xlabel('distance to oocyte center (\mu m)');
+ylabel('predicted J_{ox} (\mu M/s)');
+%title('predicted J_{ox}(v_{max}(r), k_{m}(r), c(r))')
+set(gca,'FontSize',15);
+
+cb = colorbar;
+clim([1 16])
+title(cb, 'c^* (\mu M)', 'Interpreter', 'tex')
+
+cb.Ticks = linspace(1, 16, 16);
+cb.TickLabels = round(precise_oxygen_levels, 2);
+
+savefig(string(plot_path)+'Jox_vs_dist_int_maxDiff'+string(temp_string)+'.fig')
+saveas(fig, string(plot_path)+'Jox_vs_dist_int_maxDiff'+string(temp_string)+'.png')
 %% plot predicted J_ox separated in different oxgen regimes (low, mid, high)
 
 fig = figure('Renderer', 'painters', 'Position', [10 10 1800 400]);
@@ -612,13 +661,15 @@ title('comparison of decay lengths \lambda', 'Interpreter','tex')
 
 savefig(string(plot_path)+'Lambda_vs_coxy'+string(temp_string)+'.fig')
 saveas(fig, string(plot_path)+'Lambda_vs_coxy'+string(temp_string)+'.png')
+%%
+plot(jox_sinhDec)
 
 %% plot lambda(J_ox) as a function of lambda(c_oxy) for sinh fit method
 fig = figure('Renderer', 'painters', 'Position', [10 10 700 500]);
 set(gca,'FontSize',15)
 hold on
 
-cs = viridis(16);
+cs = flip(viridis(20));
 colormap(cs)
 
 for oxy=1:16
@@ -656,6 +707,9 @@ fitrange = linspace(min(coxy_sinhDec), max(coxy_sinhDec), 100);
 plot(fitrange, linear_model(fitrange, p), 'LineWidth', 1.5, 'Color','red', ...
     'DisplayName','lin. fit slope m='+string(p(1)))
 
+ylim([5, 30])
+
+xlim([18, 110])
 set(gca,'FontSize',15)
 xlabel('\lambda_{c} (\mu m)')
 ylabel('\lambda_{J_{ox}} (\mu m)')

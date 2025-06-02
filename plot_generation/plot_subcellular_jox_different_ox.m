@@ -16,21 +16,24 @@ num_oxygen_ranges={[0, 0.1], ...
                    [1.2, 1.4], [1.4, 1.6], [1.6, 1.8], [1.8, 2.0],...
                    [2.0, 2.8], [2.8, 3.6], [3.6, 4.4], [4.4, 5.2]};
 
-% temp_resolved = false;
-% pp_path = '../data/EXP_published/postprocessing_results/';
-% plot_path = '../data/EXP_published/plots/';
-temp_resolved = true;
-pp_path = '../data/EXP_temperatureResolved/postprocessing_results/';
-plot_path = '../data/EXP_temperatureResolved/plots/';
+temp_resolved = false;
+data_path = "/home/mx/mitoFluxGradients/data/";
+pp_path = '../data/EXP_published/postprocessing_results/';
+plot_path = '../data/EXP_published/plots/';
+% temp_resolved = true;
+% data_path = "/home/mx/mitoFluxGradients/data/";
+% pp_path = '../data/EXP_temperatureResolved/postprocessing_results/';
+% plot_path = '../data/EXP_temperatureResolved/plots/';
 
-load('exp_solubilities.mat')
-load('exp_temperatures.mat')
+load(data_path + 'exp_solubilities.mat')
+load(data_path + 'exp_temperatures.mat')
 %%
 temp_ind = 1;
 
 if temp_resolved==true
     temp_string = '_T'+string(temperature(temp_ind))+'C'
-else 
+else
+    temp_ind = 4;
     temp_string = '';
 end
 load(string(pp_path)+'plot_data_multiple_oxy_ranges'+string(temp_string)+'.mat');
@@ -41,21 +44,27 @@ for oxy_ind=1:numel(oxygen_ranges)
     precise_oxygen_levels = [precise_oxygen_levels, oxygen_ranges_data{oxy_ind}.o2_levels];
     sigma_precise_oxygen_levels = [sigma_precise_oxygen_levels, oxygen_ranges_data{oxy_ind}.sigma_o2_levels];
 end
+
 if temp_resolved==true
-    precise_oxygen_levels = solubility(temp_ind).*precise_oxygen_levels./10;
+precise_oxygen_levels = solubility(temp_ind).*precise_oxygen_levels./20.946;
+sigma_precise_oxygen_levels = solubility(temp_ind).*sigma_precise_oxygen_levels./20.946;
+sigma_precise_oxygen_levels(sigma_precise_oxygen_levels==0) = mean(sigma_precise_oxygen_levels);
 else
-    precise_oxygen_levels = precise_oxygen_levels.*10;
+precise_oxygen_levels = (213.5/20.946).*precise_oxygen_levels;
+sigma_precise_oxygen_levels = (213.5/20.946).*sigma_precise_oxygen_levels;
+sigma_precise_oxygen_levels(sigma_precise_oxygen_levels==0) = mean(sigma_precise_oxygen_levels);
 end
 
 %% simple plot of J_ox gradients for different outside oxygen
-fig = figure('Renderer', 'painters', 'Position', [10 10 500 400]);
-cs = viridis(16);
+
+% subplot with all oxygen levels included
+fig = figure('Renderer', 'painters', 'Position', [10 10 600 400]);
+cs = flip(viridis(20));
 colormap(cs)
 
-% subplot(1, 2, 1)
 hold on;
 for k=1:numel(oxygen_ranges)
-    oxygen_ranges(k)
+    
     dist_all=oxygen_ranges_data{k}.dist_all;
     jox_cell_kn_all=oxygen_ranges_data{k}.jox_cell_kn_all;
 
@@ -73,7 +82,7 @@ for k=1:numel(oxygen_ranges)
 end
 
 xlim([4, 36])
-ylim([-25, 140])
+
 
 cb = colorbar;
 clim([1.5 numel(precise_oxygen_levels)+0.5])
@@ -84,25 +93,63 @@ cb.TickLabels = round(precise_oxygen_levels(1:1:end), 2);
 savefig(string(plot_path)+'Jox_vs_dist_emp'+string(temp_string)+'.fig')
 saveas(fig, string(plot_path)+'Jox_vs_dist_emp'+string(temp_string)+'.png')
 
+
+% subplot with 3 maximally different levels
+
+fig2 = figure('Renderer', 'painters', 'Position', [10 10 600 400]);
+cs = flip(viridis(20));
+colormap(cs)
+
+hold on;
+for k=[1, 2, numel(oxygen_ranges)]
+    
+    dist_all=oxygen_ranges_data{k}.dist_all;
+    jox_cell_kn_all=oxygen_ranges_data{k}.jox_cell_kn_all;
+
+    errorbar(mean(dist_all(:, 2:end), 'omitnan'),mean(jox_cell_kn_all(:, 2:end), 'omitnan'),...
+             std(jox_cell_kn_all(:, 2:end), 'omitnan')./sqrt(size(jox_cell_kn_all(:, 2:end),1)),...
+             std(jox_cell_kn_all(:, 2:end), 'omitnan')./sqrt(size(jox_cell_kn_all(:, 2:end),1)),...
+             'o', 'MarkerSize',10,'LineWidth',1.5, 'Color',cs(k, :));
+
+    xlabel('distance to oocyte center (\mu m)');
+    ylabel('inferred J_{ox} (\mu M/s)');
+    
+    %ylim([-20, 80])
+
+    set(gca,'FontSize',15);
+end
+
+xlim([4, 36])
+%ylim([-25, 140])
+
+cb = colorbar;
+clim([1.5 numel(precise_oxygen_levels)+0.5])
+title(cb, 'c^* (\mu M)', 'Interpreter', 'tex')
+cb.Ticks = linspace(1, numel(precise_oxygen_levels), numel(precise_oxygen_levels));
+cb.TickLabels = round(precise_oxygen_levels(1:1:end), 2);
+
+savefig(string(plot_path)+'Jox_vs_dist_emp_maxDiff'+string(temp_string)+'.fig')
+saveas(fig2, string(plot_path)+'Jox_vs_dist_emp_maxDiff'+string(temp_string)+'.png')
+
 %% plot Jox as a function of subcellular oxygen for all rings
 
 % choose all or only selection of all distances (rings) to plot
 plot_selectedDist = false;
 dists = [2, 4, 6, 8, 10];
 
-fig = figure('Renderer', 'painters', 'Position', [10 10 1000 800]);
+fig = figure('Renderer', 'painters', 'Position', [10 10 600 400]);
 % save corrected oxygen levels
 load(string(pp_path)+'cOxy_corr'+string(temp_string)+'.mat')
 
 % subplot(1, 2, 2)
 hold on;
-cs = parula(10);
-colormap(cs)
+cs = flip(plasma(15));
+colormap(cs(1:10, 1:end))
 
 xlabel('inferred c(r) (\mu M)');
 ylabel('inferred J_{ox}(r, c) (\mu M/s)');
 xlim([-5 55])
-ylim([-4 130])
+ylim([-4 135])
 
 set(gca,'FontSize',15);
 
@@ -110,7 +157,7 @@ cb = colorbar;
 clim([0.5 10.5])
 title(cb, 'r (\mu m)', 'Interpreter', 'tex')
 cb.Ticks = linspace(1, 10, 10);
-cb.TickLabels = round(mean(dist_all, 1), 2);
+cb.TickLabels = round(mean(dist_all, 1, 'omitnan'), 2);
 
 if plot_selectedDist==false
     for k=2:10
@@ -120,27 +167,49 @@ if plot_selectedDist==false
             errorbar(cOxy_all(2, j, k),mean(jox_cell_kn_all(:, k), 'omitnan'),...
                      std(jox_cell_kn_all(:, k), 'omitnan')./sqrt(size(jox_cell_kn_all(:, k),1)),...
                      'o', 'MarkerSize',10,'LineWidth',1.5, 'Color',cs(k, :));
-            % axes('Position',[.7 .7 .2 .2])
-            % box on
-            % if j<3
-            %     errorbar(cOxy_all(2, j, k),mean(jox_cell_kn_all(:, k), 'omitnan'),...
-            %          std(jox_cell_kn_all(:, k), 'omitnan')./sqrt(size(jox_cell_kn_all(:, k),1)),...
-            %          'o', 'MarkerSize',10,'LineWidth',1.5, 'Color',cs(k, :));
-            %end
+         
+            
         end
+    end
+
+    box on
+    axes('Position',[.6 .7 .2 .2])
+    hold on
+    for k=2:10
+        for j=1:7
+            dist_all=oxygen_ranges_data{j}.dist_all;
+            jox_cell_kn_all=oxygen_ranges_data{j}.jox_cell_kn_all;
+            errorbar(squeeze(cOxy_all(2, j, k)),mean(jox_cell_kn_all(:, k), 'omitnan'),...
+                 std(jox_cell_kn_all(:, k), 'omitnan')./sqrt(size(jox_cell_kn_all(:, k),1)),...
+                 'o', 'MarkerSize',10,'LineWidth',1.5, 'Color',cs(k, :));
+        end    
     end
 else
     for k=dists
         for j=1:numel(oxygen_ranges)
             dist_all=oxygen_ranges_data{j}.dist_all;
             jox_cell_kn_all=oxygen_ranges_data{j}.jox_cell_kn_all;
-            
             errorbar(cOxy_all(2, j, k),mean(jox_cell_kn_all(:, k), 'omitnan'),...
                      std(jox_cell_kn_all(:, k), 'omitnan')./sqrt(size(jox_cell_kn_all(:, k),1)),...
                      'o', 'MarkerSize',10,'LineWidth',1.5, 'Color',cs(k, :));
         end
     end
+
+    box on
+    axes('Position',[.6 .7 .2 .2])
+    hold on
+    for k=dists
+        for j=1:7
+            dist_all=oxygen_ranges_data{j}.dist_all;
+            jox_cell_kn_all=oxygen_ranges_data{j}.jox_cell_kn_all;
+            errorbar(squeeze(cOxy_all(2, j, k)),mean(jox_cell_kn_all(:, k), 'omitnan'),...
+                 std(jox_cell_kn_all(:, k), 'omitnan')./sqrt(size(jox_cell_kn_all(:, k),1)),...
+                 'o', 'MarkerSize',10,'LineWidth',1.5, 'Color',cs(k, :));
+        end    
+    end
 end
+
+
 
 if plot_selectedDist==false
     savefig(string(plot_path)+'Jox_vs_coxy_emp'+string(temp_string)+'.fig')

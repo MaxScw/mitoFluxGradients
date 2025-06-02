@@ -145,13 +145,15 @@ save(pp_path + "gradient_fit_linear_model"+string(temp_string)+".mat", 'fit_data
 %%
 mean(chi_squareds)
 mean(R_squareds)
+R_squareds
 %%
-subplot(1, 3, 1)
-plot(fit_params(1, :))
-subplot(1, 3, 2)
-plot(fit_params(2, :))
-subplot(1, 3, 3)
-plot(fit_params(3, :))
+% subplot(1, 3, 1)
+% plot(fit_params(1, :))
+% subplot(1, 3, 2)
+% plot(fit_params(2, :))
+% subplot(1, 3, 3)
+
+plot(fit_params(3, :)./mean_mito_density)
 
 figure(2)
 plot(R_squareds, 'o', 'HandleVisibility','off')
@@ -179,15 +181,15 @@ for ind=1:6
  
 
     % USE MITO-DENSITY WEIGHTED JOX DATA
-    mito_weighted_data = 0.5*data(2, :).*mean_mito_density;
+    mito_weighted_data = 0.5*data(2, :).*mean(mean_mito_density);
 
     data_stderr = [std(oxygen_ranges_data{ind}.dist_all./sqrt(size(oxygen_ranges_data{ind}.dist_all,1)), 'omitnan');...
                    std(oxygen_ranges_data{ind}.jox_cell_kn_all./sqrt(size(oxygen_ranges_data{ind}.jox_cell_kn_all,1)), 'omitnan')];
     mito_weighted_data_stderr = 0.5*mito_weighted_data.*sqrt((data_stderr(2, :)./data(2, :)).^2 + (sigma_mito_weigth./mean_mito_density).^2);
 
-    errorbar(data(1, :), data(2, :), data_stderr(2, :), data_stderr(2, :),...
+    errorbar(data(1, :), mito_weighted_data, mito_weighted_data_stderr, mito_weighted_data_stderr,...
              'o', 'Color', cs(ind, :), 'LineWidth',1.5)
-    plot(data(1, :), 2*rd_solver_linear(data(1, :), fit_params(:, ind))./mean_mito_density, 'Color',cs(ind, :), 'LineWidth',1.5)
+    plot(data(1, :), rd_solver_linear(data(1, :), fit_params(:, ind)), 'Color',cs(ind, :), 'LineWidth',1.5)
 end
 xlabel('distance to oocyte center (\mu m)');
 ylabel('predicted J_{ox} (\mu M/s)');
@@ -210,15 +212,15 @@ for ind=7:12
     %          'o', 'Color', cs(ind, :))
 
     % USE MITO-DENSITY WEIGHTED JOX DATA
-    mito_weighted_data = 0.5*data(2, :).*mean_mito_density;
+    mito_weighted_data = 0.5*data(2, :).*mean(mean_mito_density);
 
     data_stderr = [std(oxygen_ranges_data{ind}.dist_all./sqrt(size(oxygen_ranges_data{ind}.dist_all,1)), 'omitnan');...
                    std(oxygen_ranges_data{ind}.jox_cell_kn_all./sqrt(size(oxygen_ranges_data{ind}.jox_cell_kn_all,1)), 'omitnan')];
     mito_weighted_data_stderr = 0.5*mito_weighted_data.*sqrt((data_stderr(2, :)./data(2, :)).^2 + (sigma_mito_weigth./mean_mito_density).^2);
 
-    errorbar(data(1, :), data(2, :), data_stderr(2, :), data_stderr(2, :),...
+    errorbar(data(1, :), mito_weighted_data, mito_weighted_data_stderr, mito_weighted_data_stderr,...
              'o', 'Color', cs(ind, :), 'LineWidth',1.5)
-    plot(data(1, :), 2*rd_solver_linear(data(1, :), fit_params(:, ind))./mean_mito_density, 'Color',cs(ind, :), 'LineWidth',1.5)
+    plot(data(1, :), rd_solver_linear(data(1, :), fit_params(:, ind)), 'Color',cs(ind, :), 'LineWidth',1.5)
 end
 xlabel('distance to oocyte center (\mu m)');
 ylabel('predicted J_{ox} (\mu M/s)');
@@ -242,15 +244,15 @@ for ind=13:16
     
 
     % USE MITO-DENSITY WEIGHTED JOX DATA
-    mito_weighted_data = 0.5*data(2, :).*mean_mito_density;
+    mito_weighted_data = 0.5*data(2, :).*mean(mean_mito_density);
 
     data_stderr = [std(oxygen_ranges_data{ind}.dist_all./sqrt(size(oxygen_ranges_data{ind}.dist_all,1)), 'omitnan');...
                    std(oxygen_ranges_data{ind}.jox_cell_kn_all./sqrt(size(oxygen_ranges_data{ind}.jox_cell_kn_all,1)), 'omitnan')];
     mito_weighted_data_stderr = 0.5*mito_weighted_data.*sqrt((data_stderr(2, :)./data(2, :)).^2 + (sigma_mito_weigth./mean_mito_density).^2);
 
-    errorbar(data(1, :), data(2, :), data_stderr(2, :), data_stderr(2, :),...
+    errorbar(data(1, :), mito_weighted_data, mito_weighted_data_stderr, mito_weighted_data_stderr,...
              'o', 'Color', cs(ind, :), 'LineWidth',1.5)
-    plot(data(1, :), 2*rd_solver_linear(data(1, :), fit_params(:, ind))./mean_mito_density, 'Color',cs(ind, :), 'LineWidth',1.5)
+    plot(data(1, :), rd_solver_linear(data(1, :), fit_params(:, ind)), 'Color',cs(ind, :), 'LineWidth',1.5)
 end
 xlabel('distance to oocyte center (\mu m)');
 ylabel('predicted J_{ox} (\mu M/s)');
