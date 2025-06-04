@@ -16,20 +16,21 @@ num_oxygen_ranges={[0, 0.1], ...
                    [1.2, 1.4], [1.4, 1.6], [1.6, 1.8], [1.8, 2.0],...
                    [2.0, 2.8], [2.8, 3.6], [3.6, 4.4], [4.4, 5.2]};
 
-temp_resolved = false;
-data_path = "/home/mx/mitoFluxGradients/data/";
-pp_path = '../data/EXP_published/postprocessing_results/';
-plot_path = '../data/EXP_published/plots/';
-% temp_resolved = true;
+% temp_resolved = false;
 % data_path = "/home/mx/mitoFluxGradients/data/";
-% pp_path = '../data/EXP_temperatureResolved/postprocessing_results/';
-% plot_path = '../data/EXP_temperatureResolved/plots/';
+% pp_path = '../data/EXP_published/postprocessing_results/';
+% plot_path = '../data/EXP_published/plots/';
+temp_resolved = true;
+data_path = "/home/mx/mitoFluxGradients/data/";
+pp_path = '../data/EXP_temperatureResolved/postprocessing_results/';
+plot_path = '../data/EXP_temperatureResolved/plots/';
 
 load(data_path + 'exp_solubilities.mat')
 load(data_path + 'exp_temperatures.mat')
-%%
-temp_ind = 1;
 
+%% load in single-temp data
+temp_ind = 1;
+    
 if temp_resolved==true
     temp_string = '_T'+string(temperature(temp_ind))+'C'
 else
@@ -54,13 +55,82 @@ precise_oxygen_levels = (213.5/20.946).*precise_oxygen_levels;
 sigma_precise_oxygen_levels = (213.5/20.946).*sigma_precise_oxygen_levels;
 sigma_precise_oxygen_levels(sigma_precise_oxygen_levels==0) = mean(sigma_precise_oxygen_levels);
 end
+%% plot highest oxy level jox gradient for all temps
+fig = figure('Renderer', 'painters', 'Position', [10 10 600 400]);
+cs = cool(4);
+colormap(cs)
 
+hold on
+
+xlabel('distance to oocyte center (\mu m)');
+ylabel('inferred J_{ox} (\mu M/s)');
+
+set(gca,'FontSize',15);
+
+cb = colorbar;
+clim([0.5 4.5])
+title(cb, 'T (K)', 'Interpreter', 'tex')
+
+cb.Ticks = linspace(1, 4, 4);
+kelvin_temps = temperature(1:end-1)+273.15;
+cb.TickLabels = kelvin_temps;
+
+title('c^*='+string(round(precise_oxygen_levels(end), 2))+' \muM')
+
+for t=1:4
+
+    temp_ind = t;
+    
+    if temp_resolved==true
+        temp_string = '_T'+string(temperature(temp_ind))+'C'
+    else
+        temp_ind = 4;
+        temp_string = '';
+    end
+    load(string(pp_path)+'plot_data_multiple_oxy_ranges'+string(temp_string)+'.mat');
+    
+    precise_oxygen_levels = [];
+    sigma_precise_oxygen_levels = [];
+    for oxy_ind=1:numel(oxygen_ranges)
+        precise_oxygen_levels = [precise_oxygen_levels, oxygen_ranges_data{oxy_ind}.o2_levels];
+        sigma_precise_oxygen_levels = [sigma_precise_oxygen_levels, oxygen_ranges_data{oxy_ind}.sigma_o2_levels];
+    end
+    
+    if temp_resolved==true
+    precise_oxygen_levels = solubility(temp_ind).*precise_oxygen_levels./20.946;
+    sigma_precise_oxygen_levels = solubility(temp_ind).*sigma_precise_oxygen_levels./20.946;
+    sigma_precise_oxygen_levels(sigma_precise_oxygen_levels==0) = mean(sigma_precise_oxygen_levels);
+    else
+    precise_oxygen_levels = (213.5/20.946).*precise_oxygen_levels;
+    sigma_precise_oxygen_levels = (213.5/20.946).*sigma_precise_oxygen_levels;
+    sigma_precise_oxygen_levels(sigma_precise_oxygen_levels==0) = mean(sigma_precise_oxygen_levels);
+    end
+
+    % plotting
+
+    dist_all=oxygen_ranges_data{end}.dist_all;
+    jox_cell_kn_all=oxygen_ranges_data{end}.jox_cell_kn_all;
+
+    errorbar(mean(dist_all(:, 2:end), 'omitnan'),mean(jox_cell_kn_all(:, 2:end), 'omitnan'),...
+             std(jox_cell_kn_all(:, 2:end), 'omitnan')./sqrt(size(jox_cell_kn_all(:, 2:end),1)),...
+             std(jox_cell_kn_all(:, 2:end), 'omitnan')./sqrt(size(jox_cell_kn_all(:, 2:end),1)),...
+             'o', 'MarkerSize',10,'LineWidth',1.5, 'Color',cs(t, :));
+
+    %ylim([-20, 80])
+    
+
+end
+
+savefig(string(plot_path)+'Jox_vs_dist_emp_tempComp'+string(temp_string)+'.fig')
+saveas(fig, string(plot_path)+'Jox_vs_dist_emp_tempComp'+string(temp_string)+'.png')
 %% simple plot of J_ox gradients for different outside oxygen
 
 % subplot with all oxygen levels included
 fig = figure('Renderer', 'painters', 'Position', [10 10 600 400]);
 cs = flip(viridis(20));
 colormap(cs)
+
+title(temp_string, 'Interpreter','none')
 
 hold on;
 for k=1:numel(oxygen_ranges)
@@ -81,6 +151,7 @@ for k=1:numel(oxygen_ranges)
     set(gca,'FontSize',15);
 end
 
+%ylim([-10, 140])
 xlim([4, 36])
 
 
@@ -99,6 +170,8 @@ saveas(fig, string(plot_path)+'Jox_vs_dist_emp'+string(temp_string)+'.png')
 fig2 = figure('Renderer', 'painters', 'Position', [10 10 600 400]);
 cs = flip(viridis(20));
 colormap(cs)
+
+title(temp_string, 'Interpreter','none')
 
 hold on;
 for k=[1, 2, numel(oxygen_ranges)]
@@ -119,6 +192,7 @@ for k=[1, 2, numel(oxygen_ranges)]
     set(gca,'FontSize',15);
 end
 
+%ylim([-10, 140])
 xlim([4, 36])
 %ylim([-25, 140])
 
@@ -158,6 +232,7 @@ clim([0.5 10.5])
 title(cb, 'r (\mu m)', 'Interpreter', 'tex')
 cb.Ticks = linspace(1, 10, 10);
 cb.TickLabels = round(mean(dist_all, 1, 'omitnan'), 2);
+title(temp_string, 'Interpreter','none')
 
 if plot_selectedDist==false
     for k=2:10

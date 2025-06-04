@@ -78,7 +78,7 @@ for ind=1:numel(oxygen_ranges)
             mean(oxygen_ranges_data{ind}.jox_cell_kn_all, 'omitnan')];
 
     % USE MITO-DENSITY WEIGHTED JOX DATA
-    mito_weighted_data = 0.5*data(2, :).*mean(mean_mito_density);
+    mito_weighted_data = data(2, :);%0.5*data(2, :).*mean(mean_mito_density);
 
     data_stderr = [std(oxygen_ranges_data{ind}.dist_all./sqrt(size(oxygen_ranges_data{ind}.dist_all,1)), 'omitnan');...
                    std(oxygen_ranges_data{ind}.jox_cell_kn_all./sqrt(size(oxygen_ranges_data{ind}.jox_cell_kn_all,1)), 'omitnan')];
@@ -145,7 +145,7 @@ save(pp_path + "gradient_fit_linear_model"+string(temp_string)+".mat", 'fit_data
 %%
 mean(chi_squareds)
 mean(R_squareds)
-R_squareds
+
 %%
 % subplot(1, 3, 1)
 % plot(fit_params(1, :))
@@ -162,11 +162,11 @@ legend()
 
 %%
 subplot(2, 2, 4)
-figure('Renderer', 'painters', 'Position', [10 10 1500 500])
-
+fig = figure('Renderer', 'painters', 'Position', [10 10 1500 500])
+title('linear reaction diffusion model')
 cs = viridis(16);
 colormap(cs)
-hold on
+
 
 for ind=1:6
     subplot(1, 3, 1)
@@ -181,7 +181,7 @@ for ind=1:6
  
 
     % USE MITO-DENSITY WEIGHTED JOX DATA
-    mito_weighted_data = 0.5*data(2, :).*mean(mean_mito_density);
+    mito_weighted_data = data(2, :);%0.5*data(2, :).*mean(mean_mito_density);
 
     data_stderr = [std(oxygen_ranges_data{ind}.dist_all./sqrt(size(oxygen_ranges_data{ind}.dist_all,1)), 'omitnan');...
                    std(oxygen_ranges_data{ind}.jox_cell_kn_all./sqrt(size(oxygen_ranges_data{ind}.jox_cell_kn_all,1)), 'omitnan')];
@@ -212,7 +212,7 @@ for ind=7:12
     %          'o', 'Color', cs(ind, :))
 
     % USE MITO-DENSITY WEIGHTED JOX DATA
-    mito_weighted_data = 0.5*data(2, :).*mean(mean_mito_density);
+    mito_weighted_data = data(2, :);%0.5*data(2, :).*mean(mean_mito_density);
 
     data_stderr = [std(oxygen_ranges_data{ind}.dist_all./sqrt(size(oxygen_ranges_data{ind}.dist_all,1)), 'omitnan');...
                    std(oxygen_ranges_data{ind}.jox_cell_kn_all./sqrt(size(oxygen_ranges_data{ind}.jox_cell_kn_all,1)), 'omitnan')];
@@ -244,7 +244,7 @@ for ind=13:16
     
 
     % USE MITO-DENSITY WEIGHTED JOX DATA
-    mito_weighted_data = 0.5*data(2, :).*mean(mean_mito_density);
+    mito_weighted_data = data(2, :);%0.5*data(2, :).*mean(mean_mito_density);
 
     data_stderr = [std(oxygen_ranges_data{ind}.dist_all./sqrt(size(oxygen_ranges_data{ind}.dist_all,1)), 'omitnan');...
                    std(oxygen_ranges_data{ind}.jox_cell_kn_all./sqrt(size(oxygen_ranges_data{ind}.jox_cell_kn_all,1)), 'omitnan')];
@@ -259,7 +259,12 @@ ylabel('predicted J_{ox} (\mu M/s)');
 %title('predicted J_{ox}(v_{max}(r), k_{m}(r), c(r))')
 set(gca,'FontSize',15);
 
+
+
 cb = colorbar;
 clim([precise_oxygen_levels(1) precise_oxygen_levels(end)])
 title(cb, 'c_{oxy} (\mu M)', 'Interpreter', 'tex')
 cb.Ticks = round(linspace(precise_oxygen_levels(1), precise_oxygen_levels(end), 10), 3);
+
+savefig(string(plot_path)+'Jox_vs_dist_linRD.fig')
+saveas(fig, string(plot_path)+'Jox_vs_dist_linRD.png')

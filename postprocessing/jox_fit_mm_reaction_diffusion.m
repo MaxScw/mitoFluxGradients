@@ -73,7 +73,7 @@ chi_squareds = [];
 R_squareds = [];
 
 % get mean data + do fits
-for ind=6%:numel(oxygen_ranges)
+for ind=1:numel(oxygen_ranges)
     
     data = [mean(oxygen_ranges_data{ind}.dist_all, 'omitnan');...
             mean(oxygen_ranges_data{ind}.jox_cell_kn_all, 'omitnan')];
@@ -84,12 +84,12 @@ for ind=6%:numel(oxygen_ranges)
     mito_weight = mean(mean_mito_density);
 
     % MITO-DENSITY WEIGHTED JOX DATA
-    mito_weighted_data = data(2, :).*mito_weight.*0.5;
+    %mito_weighted_data = data(2, :).*mito_weight.*0.5;
     mito_weighted_data_stderr = 0.5*mito_weighted_data.*sqrt((data_stderr(2, :)./data(2, :)).^2 + (sigma_mito_weigth./mito_weight).^2);
     
     %use mito weighted data
-    data(2, :) = mito_weighted_data;
-    data_stderr(2, :) = mito_weighted_data_stderr;
+    %data(2, :) = mito_weighted_data;
+    %data_stderr(2, :) = mito_weighted_data_stderr;
     
     y_weights = 1./data_stderr(2, :);
     
@@ -97,13 +97,13 @@ for ind=6%:numel(oxygen_ranges)
     % set parameters to fit, increment and initial values (MICHAELIS-MENTEN RD, fixed km)
     % param = [c_star, v_max, k_m, D]
     
-    dp = [0 0.001 0.001 0];
+    dp = [0.001 0.001 0.001 0];
 
     km0 = data(2, end);
     vm0 = data(2, end)*100;
     p0 = [precise_oxygen_levels(ind) vm0 km0 diffusivity(temp_ind)];
 
-    pmin = [0.1 0.0001 0.0001 2000];
+    pmin = [1 0.0001 0.0001 2000];
     pmax = [200 1e6 1e6 3000];
 
     % fit
@@ -134,7 +134,7 @@ for ind=6%:numel(oxygen_ranges)
 
     plot(data(1, :), data(2, :), 'o')
     hold on
-    plot(data(1, :), rd_solver_mm3d(data(1, :), p0), 'Color','red')
+    %plot(data(1, :), rd_solver_mm3d(data(1, :), p0), 'Color','red')
     plot(data(1, :), rd_solver_mm3d(data(1, :), p), 'Color','green')
 end
 
@@ -162,7 +162,7 @@ legend()
 
 %%
 
-figure('Renderer', 'painters', 'Position', [10 10 1500 500])
+fig = figure('Renderer', 'painters', 'Position', [10 10 1500 500])
 
 cs = viridis(16);
 colormap(cs)
@@ -185,12 +185,10 @@ for ind=1:6
     mito_weighted_data_stderr = 0.5*mito_weighted_data.*sqrt((data_stderr(2, :)./data(2, :)).^2 + (sigma_mito_weigth./mito_weight).^2);
     
     %use mito weighted data
-    data(2, :) = mito_weighted_data;
-    data_stderr(2, :) = mito_weighted_data_stderr;
+    %data(2, :) = mito_weighted_data;
+    %data_stderr(2, :) = mito_weighted_data_stderr;
 
-    % errorbar(data(1, :), data(2, :).*mito_weight, data_stderr(2, :), data_stderr(2, :),...
-    %          'o', 'Color', cs(ind, :))
-    errorbar(data(1, :), mito_weighted_data, data_stderr(2, :), data_stderr(2, :),...
+    errorbar(data(1, :), data(2, :), data_stderr(2, :), data_stderr(2, :),...
              'o', 'Color', cs(ind, :), 'LineWidth',1.5)
     plot(data(1, :), rd_solver_mm3d(data(1, :), fit_params(:, ind), c), 'Color',cs(ind, :), 'LineWidth',1.5)
 end
@@ -221,8 +219,8 @@ for ind=7:12
     mito_weighted_data_stderr = 0.5*mito_weighted_data.*sqrt((data_stderr(2, :)./data(2, :)).^2 + (sigma_mito_weigth./mito_weight).^2);
     
     %use mito weighted data
-    data(2, :) = mito_weighted_data;
-    data_stderr(2, :) = mito_weighted_data_stderr;
+    %data(2, :) = mito_weighted_data;
+    %data_stderr(2, :) = mito_weighted_data_stderr;
 
     % errorbar(data(1, :), data(2, :).*mito_weight, data_stderr(2, :), data_stderr(2, :),...
     %          'o', 'Color', cs(ind, :))
@@ -257,8 +255,8 @@ for ind=13:16
     mito_weighted_data_stderr = 0.5*mito_weighted_data.*sqrt((data_stderr(2, :)./data(2, :)).^2 + (sigma_mito_weigth./mito_weight).^2);
     
     %use mito weighted data
-    data(2, :) = mito_weighted_data;
-    data_stderr(2, :) = mito_weighted_data_stderr;
+    %data(2, :) = mito_weighted_data;
+    %data_stderr(2, :) = mito_weighted_data_stderr;
 
     % errorbar(data(1, :), data(2, :).*mito_weight, data_stderr(2, :), data_stderr(2, :),...
     %          'o', 'Color', cs(ind, :))
@@ -275,3 +273,6 @@ cb = colorbar;
 clim([precise_oxygen_levels(1) precise_oxygen_levels(end)])
 title(cb, 'c_{oxy} (\mu M)', 'Interpreter', 'tex')
 cb.Ticks = round(linspace(precise_oxygen_levels(1), precise_oxygen_levels(end), 10), 3);
+
+savefig(string(plot_path)+'Jox_vs_dist_mmRD.fig')
+saveas(fig, string(plot_path)+'Jox_vs_dist_mmRD.png')

@@ -372,7 +372,7 @@ saveas(fig, string(plot_path)+'vMaxKmFit_vs_dist'+string(temp_string)+'.png')
 
 %% plot correction in v_max(r), k_m(r) profiles
 
-fig = figure (1);
+fig = figure('Renderer', 'painters', 'Position', [10 10 1200 500]);
 cs = jet(16);
 
 subplot(1, 2, 1)
@@ -450,7 +450,7 @@ end
 
 xlim([4, 36])
 ylim([-25, 140])
-mean(X2)
+
 xlabel('distance to oocyte center (\mu m)');
 ylabel('predicted J_{ox} (\mu M/s)');
 %title('predicted J_{ox}(v_{max}(r), k_{m}(r), c(r))')

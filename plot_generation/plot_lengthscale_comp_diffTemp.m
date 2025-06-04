@@ -68,11 +68,11 @@ end
 fig = figure('Renderer', 'painters', 'Position', [10 10 700 500]);
 set(gca,'FontSize',15)
 % yscale('log')
-ylim([5, 25])
+ylim([5, 28])
 hold on
 
 %cs = viridis(16);
-cs = viridis(numel(temps));
+cs = cool(numel(temps));
 colormap(cs)
 
 for t=1:numel(temps)
@@ -157,14 +157,17 @@ set(gca,'FontSize',15)
 xlim([20+273.5, 40+273.5])
 hold on
 
+cs = cool(numel(temps));
+colormap(cs)
+
 for temp=1:numel(temps)
 
     max_jox_dec = jox_dec_list{temp}(end);
     sigma_max_jox_dec = sigma_jox_dec_list{temp}(end);
     plot(kelvin_temps(temp), max_jox_dec, 'o', ...
-         'Color', 'red', 'MarkerSize',15, 'LineWidth',1.5)
+         'Color', cs(temp, :), 'MarkerSize',15, 'LineWidth',1.5)
     errorbar(kelvin_temps(temp), max_jox_dec, sigma_max_jox_dec, ...
-         'Color', 'red', 'MarkerSize',15, 'LineWidth',1.5)
+         'Color', cs(temp, :), 'MarkerSize',15, 'LineWidth',1.5)
 
 end
 
@@ -174,7 +177,7 @@ ylabel('\lambda_{J_{ox}} (\mu m)')
 title('\lambda( J_{ox}) at maximum oxygen versus temperature', 'Interpreter','tex')
 
 savefig(string(plot_path)+'JoxMaxCoxy_vs_temp.fig')
-saveas(fig, string(plot_path)+'JoxMaxCoxy_vs_temp.fig')
+saveas(fig, string(plot_path)+'JoxMaxCoxy_vs_temp.png')
 
 
 %%
@@ -201,6 +204,9 @@ ylabel('\lambda_{J_{ox}} (\mu m)')
 temps = [22 28 31 36];
 ring_averaged_jox_list = [];
 ring_averaged_sigma_jox_list = [];
+
+cs = cool(numel(temps));
+colormap(cs)
 
 for temp_ind=1:numel(temps)
     temp_string = '_T'+string(temps(temp_ind))+'C';
@@ -229,12 +235,13 @@ set(gca,'FontSize',15)
 xlim([273.5+21, 273.5+37])
 hold on
 
-plot(kelvin_temps, ring_averaged_jox_list, 'o',...
-     'Color', 'red', 'MarkerSize',15, 'LineWidth',1.5)
-errorbar(kelvin_temps, ring_averaged_jox_list, ring_averaged_sigma_jox_list, ...
-         ring_averaged_sigma_jox_list, 'o',...
-         'Color', 'red', 'MarkerSize',15, 'LineWidth',1.5)
-
+for t=1:4
+plot(kelvin_temps(t), ring_averaged_jox_list(t), 'o',...
+     'Color', cs(t, :), 'MarkerSize',15, 'LineWidth',1.5)
+errorbar(kelvin_temps(t), ring_averaged_jox_list(t), ring_averaged_sigma_jox_list(t), ...
+         ring_averaged_sigma_jox_list(t), 'o',...
+         'Color', cs(t, :), 'MarkerSize',15, 'LineWidth',1.5)
+end
 xlabel('temperature (K)')
 ylabel('\langle J_{ox}(r) \rangle_r (\muM/s)')
 title('whole-cell average J_{ox} versus temperature', 'Interpreter','tex')
@@ -245,13 +252,13 @@ saveas(fig, string(plot_path)+'ringAverageJox_vs_temp.png')
 %% plot eff. reaction rate as function of inverse temperature
 fig2 = figure('Renderer', 'painters', 'Position', [10 10 1200 600]);
 start_ring = 2;
-cs = parula(10);
-colormap(cs)
+cs = flip(plasma(15));
+colormap(cs(1:10, 1:end))
 
 load(string(pp_path)+'plot_data_multiple_oxy_ranges'+string(temp_string)+'.mat');
 dist = mean(oxygen_ranges_data{1}.dist_all, 'omitnan');
 
-km = true;
+km = false;
 
 deltaG_bykb = [];
 
