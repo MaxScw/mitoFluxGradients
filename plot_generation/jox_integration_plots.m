@@ -110,22 +110,26 @@ for ind=1:numel(precise_oxygen_levels)
 
 end 
 
-%% load results from J_ox integration
+%% load jox integration results
+
+mitoCorr = true;
+if mitoCorr==true
+    corr_string = '_corrected';
+else
+    corr_string = '';
+end
 
 % load v_max, k_m profiles
-load(string(pp_path)+'v_max_profiles_corrected'+string(temp_string)+'.mat')
-load(string(pp_path)+'v_max_profiles_corrected_sigma'+string(temp_string)+'.mat')
-load(string(pp_path)+'k_m_profiles_corrected'+string(temp_string)+'.mat')
-load(string(pp_path)+'k_m_profiles_corrected_sigma'+string(temp_string)+'.mat')
+load(pp_path + "v_max_profiles"+corr_string+string(temp_string)+".mat")
+load(pp_path + "v_max_profiles"+corr_string+"_sigma"+string(temp_string)+".mat")
+load(pp_path + "k_m_profiles"+corr_string+string(temp_string)+".mat")
+load(pp_path + "k_m_profiles"+corr_string+"_sigma"+string(temp_string)+".mat")
 
-% load corrected oxygen levels
-load(string(pp_path)+'cOxy_corr'+string(temp_string)+'.mat')
+% save corrected oxygen levels
+load(pp_path + "cOxy"+corr_string+string(temp_string)+".mat")
 
-% load predicted J_ox gradient
-load(string(pp_path)+'jox_pred'+string(temp_string)+'.mat')
-
-
-
+% save predicted J_ox gradient
+load(pp_path + "jox_pred"+corr_string+string(temp_string)+".mat")
 
 %% plot corrected oxygen levels
 
@@ -164,6 +168,64 @@ title('rel. deviation from flat profile c(r)=c^*')
 
 savefig(string(plot_path)+'coxy_vs_dist_int'+string(temp_string)+'.fig')
 saveas(fig, string(plot_path)+'coxy_vs_dist_int'+string(temp_string)+'.png')
+
+%% plot change in oxygen profiles with mitochondrial density correction
+
+coxy_corr = load(pp_path + "cOxy"+"_corr"+string(temp_string)+".mat");
+coxy_corr = coxy_corr.cOxy_all;
+coxy = load(pp_path + "cOxy"+""+string(temp_string)+".mat");
+coxy = coxy.cOxy_all;
+
+fig = figure('Renderer', 'painters', 'Position', [10 10 1200 500]);
+cs = viridis(16);
+cs2 = magma(4);
+colormap(cs);
+
+subplot(1, 2, 1)
+hold on
+for ind=[1, 3, 4, 5, 7, 10, 12, 14, 16]
+    if ind==1
+        vis = 'on';
+    else
+        vis = 'off';
+    end
+    plot(r_data(ind, :), squeeze(coxy(2, ind, :))./squeeze(coxy(2, ind, end)), 'o',...
+         'Color','red', 'MarkerSize',10, 'LineWidth',1.5, 'DisplayName','c_{no mito}', ...
+         'HandleVisibility',vis)
+
+    plot(r_data(ind, :), squeeze(coxy_corr(2, ind, :))./squeeze(coxy_corr(2, ind, end)), 'o',...
+         'Color','green', 'MarkerSize',10, 'LineWidth',1.5, 'DisplayName','c_{corr}', ...
+         'HandleVisibility',vis)
+    
+end
+xlabel('distance from cell center (\mu m)')
+ylabel('(c(r))/c(R)')
+set(gca,'FontSize',15)
+legend('Location','southeast')
+title('norm. subcell. oxygen levels')
+
+subplot(1, 2, 2)
+hold on
+for ind=[1, 3, 4, 5, 7, 10, 12, 14, 16]
+    plot(r_data(ind, :), squeeze(coxy(2, ind, :))./squeeze(coxy(2, ind, end))-squeeze(coxy_corr(2, ind, :))./squeeze(coxy_corr(2, ind, end)), 'o',...
+         'Color',cs(ind, :), 'MarkerSize',10, 'LineWidth',1.5)
+
+    % plot(r_data(ind, :), squeeze(coxy_corr(2, ind, :))./squeeze(coxy_corr(2, ind, end)), 'o',...
+    %      'Color','green', 'MarkerSize',10, 'LineWidth',1.5)
+end
+xlabel('distance from cell center (\mu m)')
+ylabel('(c_{no mito}(r) - c_{corr}(r))/c(R)')
+set(gca,'FontSize',15)
+title('relative change with corr.')
+
+cb = colorbar;
+clim([1 16])
+title(cb, 'c^* (\mu M)', 'Interpreter', 'tex')
+cb.Ticks = [1, 2, 3, 4, 5, 7, 10, 12, 14, 16];
+cb.TickLabels = round(precise_oxygen_levels([1, 2, 3, 4, 5, 7, 10, 12, 14, 16]), 2);
+
+savefig(string(plot_path)+'coxy_vs_dist_mitoCorr'+string(temp_string)+'.fig')
+saveas(fig, string(plot_path)+'coxy_vs_dist_mitoCorr'+string(temp_string)+'.png')
 
 %% Analyse J_ox/c_oxy as a function of cell center distance
 

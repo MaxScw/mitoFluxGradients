@@ -64,6 +64,9 @@ precise_oxygen_levels = (213.5/20.946).*precise_oxygen_levels;
 end
 
 %%
+% determine whether to include mitochondrial density correction
+mitoCorr = false;
+
 n_rings = 10;
 
 % determine range of diffusion coefficients, for which to calculate
@@ -98,13 +101,13 @@ for ind=1:numel(precise_oxygen_levels)
     sigma_r_data(ind, :) = data_stderr(1, :);
 
     % WHETHER MITO DENSITY WEIGHTED JOX DATA IS USED:
-    % APPLY mito_weight TO data
-
-    % include inheterogeneity
-    mito_weight = mean_mito_density;
-    
-    % average over inhet.
-    %mito_weight = mean(mean_mito_density);
+    if mitoCorr==true
+        % include inheterogeneity
+        mito_weight = mean_mito_density;
+    else
+        % average over inhet.
+        mito_weight = mean(mean_mito_density);
+    end
 
     jox_data_mitoDist(ind, :) = data(2, :).*mito_weight./2;    
 
@@ -298,18 +301,23 @@ end
 
 %% save results
 
+if mitoCorr==true
+    corr_string = '_corrected';
+else
+    corr_string = '';
+end
+
 % save v_max, k_m profiles
-save(pp_path + "v_max_profiles_corrected"+string(temp_string)+".mat", "vMax_all")
-save(pp_path + "v_max_profiles_corrected_sigma"+string(temp_string)+".mat", "sigma_vMax_all")
-save(pp_path + "k_m_profiles_corrected"+string(temp_string)+".mat", "kM_all")
-save(pp_path + "k_m_profiles_corrected_sigma"+string(temp_string)+".mat", "sigma_kM_all")
+save(pp_path + "v_max_profiles"+corr_string+string(temp_string)+".mat", "vMax_all")
+save(pp_path + "v_max_profiles"+corr_string+"_sigma"+string(temp_string)+".mat", "sigma_vMax_all")
+save(pp_path + "k_m_profiles"+corr_string+string(temp_string)+".mat", "kM_all")
+save(pp_path + "k_m_profiles"+corr_string+"_sigma"+string(temp_string)+".mat", "sigma_kM_all")
 
 % save corrected oxygen levels
-save(pp_path + "cOxy_corr"+string(temp_string)+".mat", "cOxy_all")
+save(pp_path + "cOxy"+corr_string+string(temp_string)+".mat", "cOxy_all")
 
 % save predicted J_ox gradient
-save(pp_path + "jox_pred"+string(temp_string)+".mat", "jox_pred")
-
+save(pp_path + "jox_pred"+corr_string+string(temp_string)+".mat", "jox_pred")
 
 
 %% obtain decay lengths from oxygen gradient

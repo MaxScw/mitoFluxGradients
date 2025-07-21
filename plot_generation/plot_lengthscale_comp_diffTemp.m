@@ -4,6 +4,10 @@ clc
 
 pp_path = '../data/EXP_temperatureResolved/postprocessing_results/';
 plot_path = '../data/EXP_temperatureResolved/plots/';
+data_path = "/home/mx/mitoFluxGradients/data/";
+
+load(data_path + 'exp_solubilities.mat')
+load(data_path + 'exp_temperatures.mat')
 
 temps = [22 28 31 36];
 kelvin_temps = temps+273.15;
@@ -16,6 +20,7 @@ vMax_list = {};
 sigma_vMax_list = {};
 kM_list = {};
 sigma_kM_list = {};
+precise_oxy_level_list = {};
 
 
 for t=1:numel(temps)
@@ -47,8 +52,26 @@ for t=1:numel(temps)
     sigma_kM = load(string(pp_path)+'k_m_profiles_corrected_sigma'+string(temp_string)+'.mat');
     vMax = load(string(pp_path)+'v_max_profiles_corrected'+string(temp_string)+'.mat');
     sigma_vMax = load(string(pp_path)+'v_max_profiles_corrected_sigma'+string(temp_string)+'.mat');
+    
 
-    % appen loaded data to list
+
+    load(string(pp_path)+'plot_data_multiple_oxy_ranges'+string(temp_string)+'.mat');
+    
+    precise_oxygen_levels = [];
+    sigma_precise_oxygen_levels = [];
+    for oxy_ind=1:16
+        precise_oxygen_levels = [precise_oxygen_levels, oxygen_ranges_data{oxy_ind}.o2_levels];
+        sigma_precise_oxygen_levels = [sigma_precise_oxygen_levels, oxygen_ranges_data{oxy_ind}.sigma_o2_levels];
+    end
+    
+ 
+    precise_oxygen_levels = solubility(t).*precise_oxygen_levels./20.946;
+    sigma_precise_oxygen_levels = solubility(t).*sigma_precise_oxygen_levels./20.946;
+    sigma_precise_oxygen_levels(sigma_precise_oxygen_levels==0) = mean(sigma_precise_oxygen_levels);
+
+
+
+    % append loaded data to list
     jox_dec_list{end+1} = jox_sinhDec;
     sigma_jox_dec_list{end+1} = sigma_jox_sinhDec;
     % jox_dec_list{end+1} = joxEmp_dec;
@@ -61,7 +84,10 @@ for t=1:numel(temps)
     sigma_vMax_list{end+1} = sigma_vMax;
     kM_list{end+1} = kM;
     sigma_kM_list{end+1} = sigma_kM;
+
+    precise_oxy_level_list{end+1} = precise_oxygen_levels;
 end
+
 
 %% plot decay length scale of Jox versus that of c_ox for different temps
 
@@ -74,6 +100,7 @@ hold on
 %cs = viridis(16);
 cs = cool(numel(temps));
 colormap(cs)
+
 
 for t=1:numel(temps)
     for oxy=1:16
@@ -139,6 +166,8 @@ xlabel('\lambda_{c} (\mu m)')
 ylabel('\lambda_{J_{ox}} (\mu m)')
 title('J_{ox} versus c gradient decay length', 'Interpreter','tex')
 
+ylim([0, 29])
+
 cb = colorbar;
 clim([0.5 4.5])
 title(cb, 'T (K)', 'Interpreter', 'tex')
@@ -159,45 +188,149 @@ hold on
 
 cs = cool(numel(temps));
 colormap(cs)
+cs2 = flip(viridis(16));
+
+low_oxy = 5;
+mid_oxy = 20;
+high_oxy = 50;
+offset = 0.2;
 
 for temp=1:numel(temps)
+    if temp==1
+        vis = 'on';
+    else
+        vis = 'off';
+    end
+    [lowv, lowi] = min(abs(precise_oxy_level_list{temp}-low_oxy));
+    [midv, midi] = min(abs(precise_oxy_level_list{temp}-mid_oxy));
+    [maxv, maxi] = min(abs(precise_oxy_level_list{temp}-high_oxy));
 
-    max_jox_dec = jox_dec_list{temp}(end);
-    sigma_max_jox_dec = sigma_jox_dec_list{temp}(end);
-    plot(kelvin_temps(temp), max_jox_dec, 'o', ...
-         'Color', cs(temp, :), 'MarkerSize',15, 'LineWidth',1.5)
-    errorbar(kelvin_temps(temp), max_jox_dec, sigma_max_jox_dec, ...
-         'Color', cs(temp, :), 'MarkerSize',15, 'LineWidth',1.5)
+    min_jox_dec = jox_dec_list{temp}(lowi);
+    mid_jox_dec = jox_dec_list{temp}(midi);
+    max_jox_dec = jox_dec_list{temp}(maxi);
+    sigma_min_jox_dec = sigma_jox_dec_list{temp}(lowi);
+    sigma_mid_jox_dec = sigma_jox_dec_list{temp}(midi);
+    sigma_max_jox_dec = sigma_jox_dec_list{temp}(maxi);
+    plot(kelvin_temps(temp)+offset*(-2), max_jox_dec, 'o', ...
+         'Color', cs2(highi, :), 'MarkerSize',15, 'LineWidth',1.5, 'HandleVisibility','off')
+    errorbar(kelvin_temps(temp)+offset*(-2), max_jox_dec, sigma_max_jox_dec, ...
+         'Color', cs2(highi, :), 'MarkerSize',15, 'LineWidth',1.5, ...
+         'DisplayName',"c*\approx"+string(high_oxy), 'HandleVisibility',vis)
+    
+    plot(kelvin_temps(temp), mid_jox_dec, 'o', ...
+         'Color', cs2(midi, :), 'MarkerSize',15, 'LineWidth',1.5, 'HandleVisibility','off')
+    errorbar(kelvin_temps(temp), mid_jox_dec, sigma_mid_jox_dec, ...
+         'Color', cs2(midi, :), 'MarkerSize',15, 'LineWidth',1.5, ...
+         'DisplayName',"c*\approx"+string(mid_oxy), 'HandleVisibility',vis)
+
+    plot(kelvin_temps(temp)+offset*2, min_jox_dec, 'o', ...
+         'Color', cs2(lowi, :), 'MarkerSize',15, 'LineWidth',1.5, 'HandleVisibility','off')
+    errorbar(kelvin_temps(temp)+offset*2, min_jox_dec, sigma_max_jox_dec, ...
+         'Color', cs2(lowi, :), 'MarkerSize',15, 'LineWidth',1.5, ...
+         'DisplayName',"c*\approx"+string(low_oxy), 'HandleVisibility',vis)
 
 end
-
+legend('Location','southeast')
 set(gca,'FontSize',15)
 xlabel('temperature (K)')
 ylabel('\lambda_{J_{ox}} (\mu m)')
-title('\lambda( J_{ox}) at maximum oxygen versus temperature', 'Interpreter','tex')
+title('\lambda( J_{ox}) versus temperature', 'Interpreter','tex')
 
-savefig(string(plot_path)+'JoxMaxCoxy_vs_temp.fig')
-saveas(fig, string(plot_path)+'JoxMaxCoxy_vs_temp.png')
+savefig(string(plot_path)+'Jox_vs_temp.fig')
+saveas(fig, string(plot_path)+'Jox_vs_temp.png')
 
+%% plot coxy decay length at high & low external oxygen
 
-%%
-fig2 = figure('Renderer', 'painters', 'Position', [10 10 700 500]);
+fig = figure('Renderer', 'painters', 'Position', [10 10 700 500]);
+set(gca,'FontSize',15)
+% yscale('log')
+xlim([20+273.5, 40+273.5])
 hold on
+
+cs = cool(numel(temps));
+colormap(cs)
+cs2 = flip(viridis(16));
+
+low_oxy = 5;
+mid_oxy = 20;
+high_oxy = 50;
+offset = 0;
+
 for temp=1:numel(temps)
-    % load corrected oxygen levels
-    temp_string = '_T'+string(temps(temp))+'C';
-    load(string(pp_path)+'cOxy_corr'+string(temp_string)+'.mat')
+    if temp==1
+        vis = 'on';
+    else
+        vis = 'off';
+    end
+    [lowv, lowi] = min(abs(precise_oxy_level_list{temp}-low_oxy));
+    [midv, midi] = min(abs(precise_oxy_level_list{temp}-mid_oxy));
+    [maxv, maxi] = min(abs(precise_oxy_level_list{temp}-high_oxy));
+
+    min_jox_dec = coxy_dec_list{temp}(lowi);
+    mid_jox_dec = coxy_dec_list{temp}(midi);
+    max_jox_dec = coxy_dec_list{temp}(maxi);
+    sigma_min_jox_dec = sigma_coxy_dec_list{temp}(lowi);
+    sigma_mid_jox_dec = sigma_coxy_dec_list{temp}(midi);
+    sigma_max_jox_dec = sigma_coxy_dec_list{temp}(maxi);
+    plot(kelvin_temps(temp)+offset*(-2), max_jox_dec, 'o', ...
+         'Color', cs2(highi, :), 'MarkerSize',15, 'LineWidth',1.5, 'HandleVisibility','off')
+    errorbar(kelvin_temps(temp)+offset*(-2), max_jox_dec, sigma_max_jox_dec, ...
+         'Color', cs2(highi, :), 'MarkerSize',15, 'LineWidth',1.5, ...
+         'DisplayName',"c*\approx"+string(high_oxy), 'HandleVisibility',vis)
     
-    errorbar(cOxy_all(2, 1:end, end), jox_dec_list{temp}, sigma_jox_dec_list{temp}, ...
-        sigma_jox_dec_list{temp}, 'o', 'Color',cs(temp, :), 'MarkerSize',15, 'LineWidth',1.5)
-    
+    plot(kelvin_temps(temp), mid_jox_dec, 'o', ...
+         'Color', cs2(midi, :), 'MarkerSize',15, 'LineWidth',1.5, 'HandleVisibility','off')
+    errorbar(kelvin_temps(temp), mid_jox_dec, sigma_mid_jox_dec, ...
+         'Color', cs2(midi, :), 'MarkerSize',15, 'LineWidth',1.5, ...
+         'DisplayName',"c*\approx"+string(mid_oxy), 'HandleVisibility',vis)
+
+    plot(kelvin_temps(temp)+offset*2, min_jox_dec, 'o', ...
+         'Color', cs2(lowi, :), 'MarkerSize',15, 'LineWidth',1.5, 'HandleVisibility','off')
+    errorbar(kelvin_temps(temp)+offset*2, min_jox_dec, sigma_max_jox_dec, ...
+         'Color', cs2(lowi, :), 'MarkerSize',15, 'LineWidth',1.5, ...
+         'DisplayName',"c*\approx"+string(low_oxy), 'HandleVisibility',vis)
+
+end
+legend('Location','northeast')
+set(gca,'FontSize',15)
+xlabel('temperature (K)')
+ylabel('\lambda_{c_{ox}} (\mu m)')
+title('\lambda( c_{ox}) versus temperature', 'Interpreter','tex')
+
+savefig(string(plot_path)+'Coxy_vs_temp.fig')
+saveas(fig, string(plot_path)+'Coxy_vs_temp.png')
+
+%% plot shift in lambda cox with temp versus with c*
+
+fig = figure('Renderer', 'painters', 'Position', [10 10 700 500]);
+set(gca,'FontSize',15)
+
+hold on
+
+for t=1:numel(temps)
+    errorbar(precise_oxy_level_list{t}, coxy_dec_list{t}, sigma_coxy_dec_list{t}, ...
+        sigma_coxy_dec_list{t}, 'o', 'Color', cs(t, :), 'MarkerSize',10, 'LineWidth',1.5)
+
 
 
 end
 
-set(gca,'FontSize',15)
-xlabel('external oxygen')
-ylabel('\lambda_{J_{ox}} (\mu m)')
+cs = cool(numel(temps));
+colormap(cs)
+cb = colorbar;
+clim([0.5 4.5])
+title(cb, 'T (K)', 'Interpreter', 'tex')
+
+cb.Ticks = linspace(1, 4, 4);
+cb.TickLabels = kelvin_temps;
+
+xlabel('c* (\mu M)')
+ylabel('\lambda(c_{oxy, ext})')
+title('comparison of decay lengths \lambda', 'Interpreter','tex')
+
+savefig(string(plot_path)+'Coxy_vs_cext.fig')
+saveas(fig, string(plot_path)+'Coxy_vs_cext.png')
+
 %% plot of ring-averaged (whole-cell) Jox as a function of temperature
 
 % get whole-cell Jox by weighted average over Jox(r) for all temperatures
@@ -310,11 +443,11 @@ for ring=start_ring:10
     % fit exp model to v_max(r)
     % param = [slope, intercept]
     
-    dp = [0.01 0.001];
+    dp = [0.01 0];
     
-    p0 = [1e6 2];
+    p0 = [-100; 0];
     
-    pmin = [-1e5 -1e5];
+    pmin = [-1e7 -1e5];
     pmax = [1e5 1e5];
     
     % fit
@@ -322,15 +455,15 @@ for ring=start_ring:10
     fit_start = 1;
     fit_end = numel(sigma_log_rate);
     max_iter = 1000;
-   
+    
     [p,X2,sigma_p,sigma_y,corr,R_sq,cvg_hst] = ...
                      lm(@linear_model, p0,...
                      100.*1./kelvin_temps', log_rate', y_weights(fit_start:fit_end)', dp,...
                      pmin, pmax, [], fit_start, fit_end, max_iter);
-    
+
     plot(1./kelvin_temps(fit_start:fit_end), linear_model(100.*1./kelvin_temps(fit_start:fit_end), p),...
     'MarkerSize',15, 'LineWidth',1.5, 'Color',cs(ring, :))
-    p
+   
     deltaG_bykb = [deltaG_bykb, -p(1)];
 
     subplot(1, 2, 2)

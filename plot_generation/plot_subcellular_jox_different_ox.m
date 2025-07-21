@@ -75,14 +75,16 @@ cb.Ticks = linspace(1, 4, 4);
 kelvin_temps = temperature(1:end-1)+273.15;
 cb.TickLabels = kelvin_temps;
 
-title('c^*='+string(round(precise_oxygen_levels(end), 2))+' \muM')
+max_oxy = 50; % muM
+min_oxy = 20;
+title('average over '+string(min_oxy)+'<c*<'+string(max_oxy)+'\muM')
 
 for t=1:4
 
     temp_ind = t;
     
     if temp_resolved==true
-        temp_string = '_T'+string(temperature(temp_ind))+'C'
+        temp_string = '_T'+string(temperature(temp_ind))+'C';
     else
         temp_ind = 4;
         temp_string = '';
@@ -107,14 +109,36 @@ for t=1:4
     end
 
     % plotting
+    
+    dist_av = [];
+    jox_av = [];
+    jox_std_av = [];
+
+    for oxy=1:16
+        if precise_oxygen_levels(oxy)<=max_oxy
+            if precise_oxygen_levels(oxy)>=min_oxy
+                dist_all=oxygen_ranges_data{oxy}.dist_all;
+                jox_cell_kn_all=oxygen_ranges_data{oxy}.jox_cell_kn_all;
+
+                dist_av = [dist_av; mean(dist_all(:, 2:end), 'omitnan')];
+                jox_av = [jox_av; mean(jox_cell_kn_all(:, 2:end), 'omitnan')];
+                jox_std_av = [jox_std_av; std(jox_cell_kn_all(:, 2:end), 'omitnan')./sqrt(size(jox_cell_kn_all(:, 2:end),1))];
+            end
+        end
+    end
+    
+    jox = mean(jox_av, 1);
+    jox_std = mean(jox_std_av, 1);
+    dist = mean(dist_av, 1);
 
     dist_all=oxygen_ranges_data{end}.dist_all;
     jox_cell_kn_all=oxygen_ranges_data{end}.jox_cell_kn_all;
 
-    errorbar(mean(dist_all(:, 2:end), 'omitnan'),mean(jox_cell_kn_all(:, 2:end), 'omitnan'),...
-             std(jox_cell_kn_all(:, 2:end), 'omitnan')./sqrt(size(jox_cell_kn_all(:, 2:end),1)),...
-             std(jox_cell_kn_all(:, 2:end), 'omitnan')./sqrt(size(jox_cell_kn_all(:, 2:end),1)),...
-             'o', 'MarkerSize',10,'LineWidth',1.5, 'Color',cs(t, :));
+    % errorbar(mean(dist_all(:, 2:end), 'omitnan'),mean(jox_cell_kn_all(:, 2:end), 'omitnan'),...
+    %          std(jox_cell_kn_all(:, 2:end), 'omitnan')./sqrt(size(jox_cell_kn_all(:, 2:end),1)),...
+    %          std(jox_cell_kn_all(:, 2:end), 'omitnan')./sqrt(size(jox_cell_kn_all(:, 2:end),1)),...
+    %          'o', 'MarkerSize',10,'LineWidth',1.5, 'Color',cs(t, :));
+    errorbar(dist, jox, jox_std, jox_std, 'o', 'MarkerSize',10,'LineWidth',1.5, 'Color',cs(t, :));
 
     %ylim([-20, 80])
     

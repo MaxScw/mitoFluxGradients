@@ -16,14 +16,14 @@ num_oxygen_ranges={[0, 0.1], ...
                    [1.2, 1.4], [1.4, 1.6], [1.6, 1.8], [1.8, 2.0],...
                    [2.0, 2.8], [2.8, 3.6], [3.6, 4.4], [4.4, 5.2]};
 
-% temp_resolved = false;
-% data_path = "/home/mx/mitoFluxGradients/data/";
-% pp_path = '../data/EXP_published/postprocessing_results/';
-% plot_path = '../data/EXP_published/plots/';
-temp_resolved = true;
+temp_resolved = false;
 data_path = "/home/mx/mitoFluxGradients/data/";
-pp_path = '../data/EXP_temperatureResolved/postprocessing_results/';
-plot_path = '../data/EXP_temperatureResolved/plots/';
+pp_path = '../data/EXP_published/postprocessing_results/';
+plot_path = '../data/EXP_published/plots/';
+% temp_resolved = true;
+% data_path = "/home/mx/mitoFluxGradients/data/";
+% pp_path = '../data/EXP_temperatureResolved/postprocessing_results/';
+% plot_path = '../data/EXP_temperatureResolved/plots/';
 
 %% loading of mito density, temperatures, solubilities, diffusivities
 
@@ -50,9 +50,14 @@ for oxy_ind=1:numel(oxygen_ranges)
     precise_oxygen_levels = [precise_oxygen_levels, oxygen_ranges_data{oxy_ind}.o2_levels];
     sigma_precise_oxygen_levels = [sigma_precise_oxygen_levels, oxygen_ranges_data{oxy_ind}.sigma_o2_levels];
 end
-precise_oxygen_levels = solubility(temp_ind).*precise_oxygen_levels.*10^-2;
-sigma_precise_oxygen_levels = solubility(temp_ind).*sigma_precise_oxygen_levels.*10^-2;
+
+if temp_resolved==true
+precise_oxygen_levels = solubility(temp_ind).*precise_oxygen_levels./20.946;
+sigma_precise_oxygen_levels = solubility(temp_ind).*sigma_precise_oxygen_levels./20.946;
 sigma_precise_oxygen_levels(sigma_precise_oxygen_levels==0) = mean(sigma_precise_oxygen_levels);
+else
+precise_oxygen_levels = (213.5/20.946).*precise_oxygen_levels;
+end
 %% load corrected internal oxygen
 corr_oxy = squeeze(load(string(pp_path)+'cOxy_corr'+string(temp_string)+'.mat').cOxy_all(2, :, :));
 
@@ -117,11 +122,11 @@ for ring=1:10
 end
 
 %% plot michaelis-menten rate law for all rings
-fig = figure('Renderer', 'painters', 'Position', [10 10 700 500]);
+fig = figure('Renderer', 'painters', 'Position', [10 10 600 400]);
 
 oxy_range = linspace(0, oxygen_levels(end), 100);
-colors = magma(10);
-colormap(colors)
+colors = flip(plasma(15));
+colormap(colors(1:10, 1:end))
 
 % plot average of J_ox(c_oxy(r)) michaelis-menten fits for three different
 % distance regimes (low, mid, high)
@@ -132,7 +137,7 @@ sigma_flux = [];
 fitflux = [];
 hold on;
 %average
-for ring=1
+for ring=2
     flux = [flux; jox_per_ring(ring, :)];
     sigma_flux = [sigma_flux; sigma_jox_per_ring(ring, :)];
     fitflux = [fitflux; mm_flux(oxy_range, fit_params(:, ring), [])];
@@ -151,7 +156,7 @@ sigma_flux = [];
 fitflux = [];
 hold on
 %average
-for ring=2
+for ring=8
     flux = [flux; jox_per_ring(ring, :)];
     sigma_flux = [sigma_flux; sigma_jox_per_ring(ring, :)];
     fitflux = [fitflux; mm_flux(oxy_range, fit_params(:, ring), [])];
@@ -170,7 +175,7 @@ flux = [];
 sigma_flux = [];
 fitflux = [];
 %average
-for ring=3
+for ring=10
     flux = [flux; jox_per_ring(ring, :)];
     sigma_flux = [sigma_flux; sigma_jox_per_ring(ring, :)];
     fitflux = [fitflux; mm_flux(oxy_range, fit_params(:, ring), [])];
@@ -183,11 +188,11 @@ hold on;
 ax=gca;
 set(gca,'FontSize',15);
 
-xlabel('c(r, c^*) (\mu M)', 'Interpreter','tex')
-ylabel('J_{ox} (\mu M/s)', 'Interpreter','tex')
-title('fit to ring-wise data')
-xlim([0, 52])
-ylim([-5 120])
+xlabel('inferred c(r) (\mu M)', 'Interpreter','tex')
+ylabel('inferred J_{ox} (\mu M/s)', 'Interpreter','tex')
+title('michaelis-menten rate law fit')
+xlim([-5 55])
+ylim([-4 135])
 cb = colorbar;
 clim([0.5 10.5])
 title(cb, 'r (\mu m)', 'Interpreter', 'tex')
