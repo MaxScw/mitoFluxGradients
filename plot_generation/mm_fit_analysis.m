@@ -122,10 +122,10 @@ for ring=1:10
 end
 
 %% plot michaelis-menten rate law for all rings
-fig = figure('Renderer', 'painters', 'Position', [10 10 600 400]);
+fig = figure('Renderer', 'painters', 'Position', [10 10 700 500]);
 
 oxy_range = linspace(0, oxygen_levels(end), 100);
-colors = flip(plasma(15));
+colors = flip(cool(15));
 colormap(colors(1:10, 1:end))
 
 % plot average of J_ox(c_oxy(r)) michaelis-menten fits for three different
@@ -143,12 +143,13 @@ for ring=2
     fitflux = [fitflux; mm_flux(oxy_range, fit_params(:, ring), [])];
    
 end
-plot(oxy_range, mean(fitflux, 1), 'Color', colors(4, :), 'LineWidth',1.5)
+plot(oxy_range, mean(fitflux, 1), 'Color', colors(2, :), 'LineWidth',1.5, ...
+    'HandleVisibility','off')
 errorbar(mean(corr_oxy, 2), mean(flux, 1),...
-         mean(sigma_flux, 1), mean(sigma_flux, 1), 'o', 'Color', colors(4, :), ...
-         'MarkerSize',10, 'LineWidth',1.5)
+         mean(sigma_flux, 1), mean(sigma_flux, 1), 'o', 'Color', colors(2, :), ...
+         'MarkerSize',10, 'LineWidth',1.5, 'HandleVisibility','off')
 ax=gca;
-set(gca,'FontSize',15);
+set(gca,'FontSize',19);
 
 %mid
 flux = [];
@@ -162,13 +163,14 @@ for ring=8
     fitflux = [fitflux; mm_flux(oxy_range, fit_params(:, ring), [])];
 
 end
-plot(oxy_range, mean(fitflux, 1), 'Color', colors(8, :), 'LineWidth',1.5)
+plot(oxy_range, mean(fitflux, 1), 'Color', colors(8, :), 'LineWidth',1.5, ...
+    'HandleVisibility','off')
 errorbar(mean(corr_oxy, 2), mean(flux, 1),...
          mean(sigma_flux, 1), mean(sigma_flux, 1), 'o', 'Color', colors(8, :), ...
-         'MarkerSize',10, 'LineWidth',1.5)
+         'MarkerSize',10, 'LineWidth',1.5, 'HandleVisibility','off')
 hold on;
 ax=gca;
-set(gca,'FontSize',15);
+set(gca,'FontSize',19);
 
 %high
 flux = [];
@@ -180,22 +182,23 @@ for ring=10
     sigma_flux = [sigma_flux; sigma_jox_per_ring(ring, :)];
     fitflux = [fitflux; mm_flux(oxy_range, fit_params(:, ring), [])];
 end
-plot(oxy_range, mean(fitflux, 1), 'Color', colors(9, :), 'LineWidth',1.5)
+plot(oxy_range, mean(fitflux, 1), 'Color', colors(10, :), 'LineWidth',1.5, ...
+    'DisplayName','J_{ox}^{theory}')
 errorbar(mean(corr_oxy, 2), mean(flux, 1),...
-         mean(sigma_flux, 1), mean(sigma_flux, 1), 'o', 'Color', colors(9, :), ...
-         'MarkerSize',10, 'LineWidth',1.5)
+         mean(sigma_flux, 1), mean(sigma_flux, 1), 'o', 'Color', colors(10, :), ...
+         'MarkerSize',10, 'LineWidth',1.5, 'DisplayName', 'J_{ox}')
 hold on;
 ax=gca;
-set(gca,'FontSize',15);
-
-xlabel('inferred c(r) (\mu M)', 'Interpreter','tex')
-ylabel('inferred J_{ox} (\mu M/s)', 'Interpreter','tex')
-title('michaelis-menten rate law fit')
+set(gca,'FontSize',19);
+legend()
+xlabel('$\hat{c}(r) (\mu M)$', 'Interpreter','latex')
+ylabel('ETC flux $(\mu M/s)$', 'Interpreter','latex')
+title('michaelis-menten rate law fit', 'Interpreter','latex')
 xlim([-5 55])
 ylim([-4 135])
 cb = colorbar;
 clim([0.5 10.5])
-title(cb, 'r (\mu m)', 'Interpreter', 'tex')
+title(cb, 'r $(\mu m)$', 'Interpreter', 'latex')
 dist_per_ring(:, 1)
 cb.Ticks = linspace(1, 10, 10);
 cb.TickLabels = round(mean(dist_per_ring, 2), 2);

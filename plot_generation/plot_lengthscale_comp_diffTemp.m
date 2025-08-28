@@ -98,7 +98,7 @@ ylim([5, 28])
 hold on
 
 %cs = viridis(16);
-cs = cool(numel(temps));
+cs = plasma(numel(temps));
 colormap(cs)
 
 
@@ -180,13 +180,14 @@ saveas(fig, string(plot_path)+'LambdaJox_vs_lambdaCox_tempComp.png')
 
 %% plot Jox decay length at maximum oxygen as a function of temperature
 
-fig = figure('Renderer', 'painters', 'Position', [10 10 700 500]);
+fig = figure('Renderer', 'painters', 'Position', [10 10 600 400]);
 set(gca,'FontSize',15)
 % yscale('log')
-xlim([20+273.5, 40+273.5])
+%xlim([20+273.5, 40+273.5])
+ylim([5, 30])
 hold on
 
-cs = cool(numel(temps));
+cs = magma(numel(temps));
 colormap(cs)
 cs2 = flip(viridis(16));
 
@@ -211,33 +212,34 @@ for temp=1:numel(temps)
     sigma_min_jox_dec = sigma_jox_dec_list{temp}(lowi);
     sigma_mid_jox_dec = sigma_jox_dec_list{temp}(midi);
     sigma_max_jox_dec = sigma_jox_dec_list{temp}(maxi);
-    plot(kelvin_temps(temp)+offset*(-2), max_jox_dec, 'o', ...
-         'Color', cs2(highi, :), 'MarkerSize',15, 'LineWidth',1.5, 'HandleVisibility','off')
-    errorbar(kelvin_temps(temp)+offset*(-2), max_jox_dec, sigma_max_jox_dec, ...
-         'Color', cs2(highi, :), 'MarkerSize',15, 'LineWidth',1.5, ...
-         'DisplayName',"c*\approx"+string(high_oxy), 'HandleVisibility',vis)
+    plot(temps(temp)+offset*(-2), max_jox_dec, 'o', ...
+         'Color', cs2(maxi, :), 'MarkerSize',15, 'LineWidth',1.5, 'HandleVisibility','off')
+    errorbar(temps(temp)+offset*(-2), max_jox_dec, sigma_max_jox_dec, ...
+         'Color', cs2(maxi, :), 'MarkerSize',15, 'LineWidth',1.5, ...
+         'DisplayName',"$c*\approx$"+string(high_oxy), 'HandleVisibility',vis)
     
-    plot(kelvin_temps(temp), mid_jox_dec, 'o', ...
+    plot(temps(temp), mid_jox_dec, 'o', ...
          'Color', cs2(midi, :), 'MarkerSize',15, 'LineWidth',1.5, 'HandleVisibility','off')
-    errorbar(kelvin_temps(temp), mid_jox_dec, sigma_mid_jox_dec, ...
+    errorbar(temps(temp), mid_jox_dec, sigma_mid_jox_dec, ...
          'Color', cs2(midi, :), 'MarkerSize',15, 'LineWidth',1.5, ...
-         'DisplayName',"c*\approx"+string(mid_oxy), 'HandleVisibility',vis)
+         'DisplayName',"$c*\approx$"+string(mid_oxy), 'HandleVisibility',vis)
 
-    plot(kelvin_temps(temp)+offset*2, min_jox_dec, 'o', ...
+    plot(temps(temp)+offset*2, min_jox_dec, 'o', ...
          'Color', cs2(lowi, :), 'MarkerSize',15, 'LineWidth',1.5, 'HandleVisibility','off')
-    errorbar(kelvin_temps(temp)+offset*2, min_jox_dec, sigma_max_jox_dec, ...
+    errorbar(temps(temp)+offset*2, min_jox_dec, sigma_max_jox_dec, ...
          'Color', cs2(lowi, :), 'MarkerSize',15, 'LineWidth',1.5, ...
-         'DisplayName',"c*\approx"+string(low_oxy), 'HandleVisibility',vis)
+         'DisplayName',"$c*\approx$"+string(low_oxy), 'HandleVisibility',vis)
 
 end
-legend('Location','southeast')
-set(gca,'FontSize',15)
-xlabel('temperature (K)')
-ylabel('\lambda_{J_{ox}} (\mu m)')
-title('\lambda( J_{ox}) versus temperature', 'Interpreter','tex')
+legend('Location','southeast', 'Interpreter','latex')
+set(gca,'FontSize',19)
+xlabel('temperature ($^\circ$C)', 'Interpreter','latex')
+ylabel('$\lambda_{J_{ox}}$ ($\mu m$)', 'Interpreter','latex')
+title('$\lambda( J_{ox})$ versus temperature', 'Interpreter','latex')
 
 savefig(string(plot_path)+'Jox_vs_temp.fig')
 saveas(fig, string(plot_path)+'Jox_vs_temp.png')
+saveas(fig, string(plot_path)+'Jox_vs_temp.svg')
 
 %% plot coxy decay length at high & low external oxygen
 
@@ -247,7 +249,7 @@ set(gca,'FontSize',15)
 xlim([20+273.5, 40+273.5])
 hold on
 
-cs = cool(numel(temps));
+cs = plasma(numel(temps));
 colormap(cs)
 cs2 = flip(viridis(16));
 
@@ -273,9 +275,9 @@ for temp=1:numel(temps)
     sigma_mid_jox_dec = sigma_coxy_dec_list{temp}(midi);
     sigma_max_jox_dec = sigma_coxy_dec_list{temp}(maxi);
     plot(kelvin_temps(temp)+offset*(-2), max_jox_dec, 'o', ...
-         'Color', cs2(highi, :), 'MarkerSize',15, 'LineWidth',1.5, 'HandleVisibility','off')
+         'Color', cs2(maxi, :), 'MarkerSize',15, 'LineWidth',1.5, 'HandleVisibility','off')
     errorbar(kelvin_temps(temp)+offset*(-2), max_jox_dec, sigma_max_jox_dec, ...
-         'Color', cs2(highi, :), 'MarkerSize',15, 'LineWidth',1.5, ...
+         'Color', cs2(maxi, :), 'MarkerSize',15, 'LineWidth',1.5, ...
          'DisplayName',"c*\approx"+string(high_oxy), 'HandleVisibility',vis)
     
     plot(kelvin_temps(temp), mid_jox_dec, 'o', ...
@@ -315,7 +317,7 @@ for t=1:numel(temps)
 
 end
 
-cs = cool(numel(temps));
+cs = plasma(numel(temps));
 colormap(cs)
 cb = colorbar;
 clim([0.5 4.5])
@@ -338,7 +340,7 @@ temps = [22 28 31 36];
 ring_averaged_jox_list = [];
 ring_averaged_sigma_jox_list = [];
 
-cs = cool(numel(temps));
+cs = plasma(numel(temps));
 colormap(cs)
 
 for temp_ind=1:numel(temps)
@@ -363,35 +365,37 @@ ring_averaged_sigma_jox_list = [ring_averaged_sigma_jox_list ring_averaged_sigma
 end
 
 % plotting
-fig = figure('Renderer', 'painters', 'Position', [10 10 700 500]);
+fig = figure('Renderer', 'painters', 'Position', [10 10 600 400]);
 set(gca,'FontSize',15)
-xlim([273.5+21, 273.5+37])
+xlim([21, 37])
 hold on
 
 for t=1:4
-plot(kelvin_temps(t), ring_averaged_jox_list(t), 'o',...
+plot(temps(t), ring_averaged_jox_list(t), 'o',...
      'Color', cs(t, :), 'MarkerSize',15, 'LineWidth',1.5)
-errorbar(kelvin_temps(t), ring_averaged_jox_list(t), ring_averaged_sigma_jox_list(t), ...
+errorbar(temps(t), ring_averaged_jox_list(t), ring_averaged_sigma_jox_list(t), ...
          ring_averaged_sigma_jox_list(t), 'o',...
-         'Color', cs(t, :), 'MarkerSize',15, 'LineWidth',1.5)
+         'Color', cs(t, :), 'MarkerSize',15, 'LineWidth',2)
 end
-xlabel('temperature (K)')
-ylabel('\langle J_{ox}(r) \rangle_r (\muM/s)')
-title('whole-cell average J_{ox} versus temperature', 'Interpreter','tex')
+xlabel('temperature ($^\circ$C)', 'Interpreter','latex')
+%ylabel(' $\overline{\textrm{J}}_{\textrm{ox}}(\textrm{r})$ ($\muM/s$)', 'Interpreter', 'latex')
+ylabel('$\overline{\textrm{J}}_{\textrm{ox}}$ ($\mu M/s$)', 'Interpreter','latex')
+title('whole-cell average $J_{ox}$ at highest $c^*$', 'Interpreter','latex')
 
 savefig(string(plot_path)+'ringAverageJox_vs_temp.fig')
 saveas(fig, string(plot_path)+'ringAverageJox_vs_temp.png')
+saveas(fig, string(plot_path)+'ringAverageJox_vs_temp.svg')
 
 %% plot eff. reaction rate as function of inverse temperature
-fig2 = figure('Renderer', 'painters', 'Position', [10 10 1200 600]);
+fig2 = figure('Renderer', 'painters', 'Position', [10 10 1800 600]);
 start_ring = 2;
-cs = flip(plasma(15));
+cs = flip(cool(15));
 colormap(cs(1:10, 1:end))
 
 load(string(pp_path)+'plot_data_multiple_oxy_ranges'+string(temp_string)+'.mat');
 dist = mean(oxygen_ranges_data{1}.dist_all, 'omitnan');
 
-km = false;
+km = true;
 
 deltaG_bykb = [];
 
@@ -418,23 +422,25 @@ for ring=start_ring:10
 
     end
     
-    subplot(1, 2, 1)
-    set(gca,'FontSize',15)
-    xlabel('1/T (1/K)')
+    subplot(1, 3, 1)
+    set(gca,'FontSize',19)
+    xlabel('1/T (1/K)', 'Interpreter','latex')
     
-    title('eff. reaction rate per ring')
+    %title('eff. reaction rate per ring')
     %xlim([294, 312])
     hold on
     
-    if km == true
-    ylabel('log(v_{max}/T)')
+    if km == false
+    ylabel('log($v_{max}/T$)', 'Interpreter','latex')
     log_rate = log(vMax_temps./(kelvin_temps));
     sigma_log_rate = sqrt((sigma_vMax_temps./vMax_temps).^2 );
     else
-    ylabel('log(k_M/T)')
+    ylabel('log($k_{m}/T$)', 'Interpreter','latex')
+    
     log_rate = log(kM_temps./(kelvin_temps));
     sigma_log_rate = sqrt((sigma_kM_temps./kM_temps).^2);
     end
+
     errorbar(1./kelvin_temps, log_rate, sigma_log_rate,...
     'o', 'MarkerSize',15, 'LineWidth',1.5, 'Color',cs(ring, :))
 
@@ -445,7 +451,7 @@ for ring=start_ring:10
     
     dp = [0.01 0];
     
-    p0 = [-100; 0];
+    p0 = [-100; 15];
     
     pmin = [-1e7 -1e5];
     pmax = [1e5 1e5];
@@ -466,21 +472,56 @@ for ring=start_ring:10
    
     deltaG_bykb = [deltaG_bykb, -p(1)];
 
-    subplot(1, 2, 2)
-    xlabel('r (\mu m)')
-    ylabel('\Delta G (J/mol)')
-    title('eff. activation energy')
-    set(gca,'FontSize',15)
+    subplot(1, 3, 2)
+    xlabel('r ($\mu m$)', 'Interpreter','latex')
+    if km == true
+    ylabel('$\Delta G_{k_m}$ ($J/mol$)', 'Interpreter','latex')
+    else
+    ylabel('$\Delta G_{v_{max}}$ ($J/mol$)', 'Interpreter','latex')
+    end
+    %title('eff. activation energy', 'Interpreter','latex')
+    set(gca,'FontSize',19)
     hold on
     errorbar(dist(ring), -p(1)*100*8.3, -sigma_p(1)*100*8.3,...
         'o','MarkerSize',15, 'LineWidth',1.5, 'Color',cs(ring, :))
     %errorbar(1./kelvin_temps, kM_temps, sigma_vMax_temps)
+    
+    
+    collaps_val = (log_rate-p(2)).*(1./(p(1)*100))
+    sigma_collaps_val = collaps_val.*sqrt((sigma_log_rate./log_rate).^2 + ...
+                                          (sigma_p(1)/p(1))^2);
+
+
+    subplot(1, 3, 3)
+    set(gca,'FontSize',19)
+    hold on
+    
+    errorbar(1./kelvin_temps, collaps_val, sigma_collaps_val, sigma_collaps_val,...
+             'o', 'MarkerSize',15, 'LineWidth',1.5, 'Color',cs(ring, :))
+    
+    plot(1./kelvin_temps, collaps_val,...
+             'MarkerSize',15, 'LineWidth',1.5, 'Color',cs(ring, :))
+    if ring == 10
+    plot(1./kelvin_temps, 1./kelvin_temps,...
+             'MarkerSize',15, 'LineWidth',1.5, 'Color','black', ...
+             'LineStyle','--', 'DisplayName','slope = 1')
+    
+    end
+    if km == false
+    ylabel('$(\log{(v_{max}/T)}--\log{B}) \cdot -R/\Delta G $', 'Interpreter','latex')
+
+    else
+    ylabel('log($k_{m}/T$)', 'Interpreter','latex')
+    
+  
+    end
+    
         
 end
 
 cb = colorbar;
 clim([0.5 10.5-start_ring])
-title(cb, 'r (\mu m)', 'Interpreter', 'tex')
+title(cb, 'r ($\mu m$)', 'Interpreter', 'latex')
 
 cb.Ticks = linspace(1, 10-start_ring, 10-start_ring);
 cb.TickLabels = dist(start_ring:end);
@@ -503,7 +544,7 @@ start_ring = 2;
 fig = figure('Renderer', 'painters', 'Position', [10 10 1000 600]);
 
 set(gca,'FontSize',15)
-cs = viridis(numel(temps));
+cs = plasma(numel(temps));
 colormap(cs)
 
 hold on

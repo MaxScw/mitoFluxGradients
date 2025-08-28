@@ -129,45 +129,66 @@ load(pp_path + "k_m_profiles"+corr_string+"_sigma"+string(temp_string)+".mat")
 load(pp_path + "cOxy"+corr_string+string(temp_string)+".mat")
 
 % save predicted J_ox gradient
-load(pp_path + "jox_pred"+corr_string+string(temp_string)+".mat")
+load(pp_path + "jox_pred"+string(temp_string)+".mat")
 
 %% plot corrected oxygen levels
 
-fig = figure('Renderer', 'painters', 'Position', [10 10 1200 500]);
-cs = viridis(16);
+
+fig = figure('Renderer', 'painters', 'Position', [10 10 600 500]);
+
+cs = flip(viridis(20));
 cs2 = magma(4);
 colormap(cs);
 
-subplot(1, 2, 1)
+% subplot(1, 2, 1)
 hold on
-for ind=[1, 2, 3, 4, 5, 7, 10, 12, 14, 16]
+for ind=[2, 3, 4, 5, 7, 10, 12, 14, 16]
     plot(r_data(ind, :), squeeze(cOxy_all(2, ind, :))./squeeze(cOxy_all(2, ind, end)), 'o',...
          'Color',cs(ind, :), 'MarkerSize',10, 'LineWidth',1.5)
 end
-xlabel('distance from cell center (\mu m)')
-ylabel('c(c^*, r)/c(c^*, R)')
-set(gca,'FontSize',15)
-title('norm. subcell. oxygen levels')
+xlabel('distance from cell center $(\mu m)$', 'Interpreter','latex')
+ylabel('$\hat{c}(c^*, r)/\hat{c}(c^*, R)$', 'Interpreter','latex')
+set(gca,'FontSize',19)
+title('norm. subcell. oxygen levels', 'Interpreter','latex')
 
 cb = colorbar;
-clim([1 16])
-title(cb, 'c^* (\mu M)', 'Interpreter', 'tex')
-cb.Ticks = [1, 2, 3, 4, 5, 7, 10, 12, 14, 16];
-cb.TickLabels = round(precise_oxygen_levels([1, 2, 3, 4, 5, 7, 10, 12, 14, 16]), 2);
+% clim([1 16])
+% title(cb, '$c^* (\mu M)$', 'Interpreter', 'latex')
+% cb.Ticks = [2, 3, 4, 5, 7, 10, 12, 14, 16];
+% cb.TickLabels = round(precise_oxygen_levels([1, 2, 3, 4, 5, 7, 10, 12, 14, 16]), 2);
+
+clim([1.5 numel(precise_oxygen_levels)+0.5])
+title(cb, '$c^* (\mu M)$', 'Interpreter', 'latex')
+cb.Ticks = linspace(1, numel(precise_oxygen_levels), numel(precise_oxygen_levels));
+cb.TickLabels = round(precise_oxygen_levels(1:1:end), 2);
+
 ylim([0.65, 1.01])
 %yscale('log')
 xlim([0, 36])
 
-subplot(1, 2, 2)
-plot(precise_oxygen_levels, mean(abs((squeeze(cOxy_all(2, :, :))-precise_oxygen_levels')), 2)./precise_oxygen_levels',...
-     'o', 'MarkerSize',10, 'LineWidth',1.5)
-ylabel('\langle |c(c^*, r) - c^*| \rangle_r /c^*')
-xlabel('external oxygen conc. c* (\mu M)')
-set(gca,'FontSize',15)
-title('rel. deviation from flat profile c(r)=c^*')
-
 savefig(string(plot_path)+'coxy_vs_dist_int'+string(temp_string)+'.fig')
 saveas(fig, string(plot_path)+'coxy_vs_dist_int'+string(temp_string)+'.png')
+
+
+fig = figure('Renderer', 'painters', 'Position', [10 10 600 500]);
+cs = flip(viridis(16));
+cs2 = magma(4);
+colormap(cs);
+
+
+
+% subplot(1, 2, 2)
+plot(precise_oxygen_levels, mean(abs((squeeze(cOxy_all(2, :, :))-precise_oxygen_levels')), 2)./precise_oxygen_levels',...
+     'o', 'MarkerSize',10, 'LineWidth',1.5)
+ylabel('$\langle |\hat{c}(c^*, r) - c^*| \rangle_r /c^*$', 'Interpreter','latex')
+xlabel('external oxygen conc. $c* (\mu M)$', 'Interpreter','latex')
+set(gca,'FontSize',20)
+title('rel. deviation from flat profile $c(r)=c^*$', 'Interpreter','latex')
+
+savefig(string(plot_path)+'coxy_vs_dist_int_flatDiff'+string(temp_string)+'.fig')
+saveas(fig, string(plot_path)+'coxy_vs_dist_int_flatDiff'+string(temp_string)+'.png')
+
+
 
 %% plot change in oxygen profiles with mitochondrial density correction
 
@@ -342,10 +363,10 @@ cs = jet(16);
 subplot(1, 2, 1)
 hold on
 plot(data(1, 2:end), vMax_all(2, 2:end), 'HandleVisibility','off',...
-      'LineWidth',1.5, 'Color','blue')
+      'LineWidth',1.5, 'Color','red')
 errorbar(data(1, 2:end), vMax_all(2, 2:end), sigma_vMax_all(2, 2:end),...
          sigma_vMax_all(2, 2:end),'o', 'MarkerSize',10,...
-         'LineWidth',1.5, 'Color','blue')
+         'LineWidth',1.5, 'Color','red')
 
 y_weights = 1./sigma_vMax_all(2, 1:end);
 
@@ -370,28 +391,29 @@ max_iter = 1000;
                  data(1, 1:end)', vMax_all(2, 1:end)', y_weights(fit_start:fit_end), dp,...
                  pmin, pmax, [], fit_start, fit_end, max_iter);
 r_range = linspace(data(1, 2), data(1, end), 100);
-legendstring = 'a*exp(r/b)+c (a='+string(round(p(1), 3))+',b='+string(round(1/p(2), 2))+',c='+string(round(p(3), 2))+')';
+%legendstring = '$a*exp(r/b)+c$ (a='+string(round(p(1), 3))+',b='+string(round(1/p(2), 2))+',c='+string(round(p(3), 2))+')';
+legendstring = '$a\cdot exp(r/b)+c$, $R^2=$'+ string(round(R_sq, 2));
 plot(data(1, 2:end), exp_model(data(1, 2:end), p), 'LineWidth',1.5, ...
-     'Color','red')
+     'Color','black', 'LineStyle','--')
 
 p_vmax = p;
 
-xlabel('distance from cell center (\mu m)')
-ylabel('v_{max} (\mu M/s)')
+xlabel('distance from cell center $(\mu m)$','Interpreter','latex')
+ylabel('$v_{max} (\mu M/s)$', 'Interpreter','latex')
 
-set(gca,'FontSize',15)
+set(gca,'FontSize',19)
 
-legend({'v_{max}', legendstring}, 'Location','northwest')
-title('v_{max} profile from mm fit')
+legend({'$v_{max}$', legendstring}, 'Location','northwest', 'Interpreter','latex')
+title('$v_{max}$ profile from mm fit', 'Interpreter','latex')
 
 % k_m profile
 subplot(1, 2, 2)
 hold on
 plot(data(1, 2:end), kM_all(2, 2:end), 'HandleVisibility','off',...
-      'LineWidth',1.5, 'Color','blue')
+      'LineWidth',1.5, 'Color','red')
 errorbar(data(1, 2:end), kM_all(2, 2:end), sigma_kM_all(2, 2:end),...
          sigma_kM_all(2, 2:end),'o', 'MarkerSize',10,...
-         'DisplayName','k_{m}',  'LineWidth',1.5, 'Color','blue')
+         'DisplayName','$k_{m}$',  'LineWidth',1.5, 'Color','red')
 
 y_weights = 1./sigma_kM_all(2, 2:end);
 
@@ -416,18 +438,19 @@ max_iter = 1000;
                  data(1, 2:end)', kM_all(2, 2:end)', y_weights, dp,...
                  pmin, pmax, [], fit_start, fit_end, max_iter);
 r_range = linspace(data(1, 2), data(1, end), 100);
-legendstring = 'a*r+b (a='+string(round(p(1), 3))+',b='+string(round(p(2), 2))+')';
+%legendstring = '$a*r+b$ (a='+string(round(p(1), 3))+',b='+string(round(p(2), 2))+')';
+legendstring = '$a\cdot r+b$, $R^2=$'+ string(round(R_sq, 2));
 plot(data(1, 2:end), linear_model(data(1, 2:end), p), 'LineWidth',1.5, ...
-     'Color','red', 'DisplayName',legendstring)
+     'Color','black','LineStyle', '--', 'DisplayName',legendstring)
 
-xlabel('distance from cell center (\mu m)')
-ylabel('k_{m} (\mu M)')
+xlabel('distance from cell center $(\mu m)$', 'Interpreter','latex')
+ylabel('$k_{m} (\mu M)$', 'Interpreter','latex')
 
 P_km = p;
 
-set(gca,'FontSize',15)
-legend('Location','best')
-title('k_{m} profile from mm fit')
+set(gca,'FontSize',19)
+legend('Location','best', 'Interpreter','latex')
+title('$k_{m}$ profile from mm fit', 'Interpreter','latex')
 
 savefig(string(plot_path)+'vMaxKmFit_vs_dist'+string(temp_string)+'.fig')
 saveas(fig, string(plot_path)+'vMaxKmFit_vs_dist'+string(temp_string)+'.png')
@@ -483,7 +506,7 @@ saveas(fig, string(plot_path)+'vMaxKmCorr_vs_dist'+string(temp_string)+'.png')
 %% plot J_ox(r) predicted from v_max(r), k_m(r)
 
 % plot integrated jox for all oxygen levels
-fig = figure('Renderer', 'painters', 'Position', [10 10 600 400]);
+fig = figure('Renderer', 'painters', 'Position', [10 10 700 510]);
 
 start_ring = 2;
 cs = flip(viridis(20));
@@ -496,14 +519,22 @@ for oxy=1:16
     hold on
     % plot(r_data(oxy, :), squeeze(jox_pred(2, oxy, :)), 'Color',cs(oxy, :), ...
     %      'LineWidth',1.5)
+    if oxy==10
+        vis = 'on';
+    else
+        vis = 'off';
+    end
+    
+
+    joxPred = squeeze(cOxy_all(2, oxy, :)).*vMax_all(2, :)'./(squeeze(cOxy_all(2, oxy, :))+ kM_all(2, :)');
+    %joxPred = squeeze(cOxy_all(2, oxy, :)).*exp_model(r_data(oxy, :), p_vmax)'./(squeeze(cOxy_all(2, oxy, :))+ linear_model(r_data(oxy, :)', P_km));
+    plot(r_data(oxy, start_ring:end), joxPred(start_ring:end),...
+         'Color',cs(oxy, :), 'LineWidth',1.5, 'HandleVisibility',vis, ...
+         'DisplayName','J_{ox}^{theory}')
+
     errorbar(r_data(oxy, 2:end), jox_data(oxy, 2:end), sigma_jox_data(oxy, 2:end), ...
         sigma_jox_data(oxy, 2:end),'o', 'Color',cs(oxy, :), 'LineWidth',1.5, ...
-        'MarkerSize', 10)
-
-    %joxPred = squeeze(cOxy_all(2, oxy, :)).*vMax_all(2, :)'./(squeeze(cOxy_all(2, oxy, :))+ kM_all(2, :)');
-    joxPred = squeeze(cOxy_all(2, oxy, :)).*exp_model(r_data(oxy, :), p_vmax)'./(squeeze(cOxy_all(2, oxy, :))+ linear_model(r_data(oxy, :)', P_km));
-    plot(r_data(oxy, start_ring:end), joxPred(start_ring:end),...
-         'Color',cs(oxy, :), 'LineWidth',1.5)
+        'MarkerSize', 10, 'HandleVisibility',vis, 'DisplayName','J_{ox}')
 
     chi_sq = sum(((jox_data(oxy, :) - joxPred').^2)./jox_data(oxy, :));
 
@@ -513,17 +544,18 @@ end
 xlim([4, 36])
 ylim([-25, 140])
 
-xlabel('distance to oocyte center (\mu m)');
-ylabel('predicted J_{ox} (\mu M/s)');
+xlabel('distance from cell center $(\mu m)$', 'Interpreter','latex');
+ylabel('ETC fluc $(\mu M/s)$', 'Interpreter','latex');
 %title('predicted J_{ox}(v_{max}(r), k_{m}(r), c(r))')
-set(gca,'FontSize',15);
+set(gca,'FontSize',19);
 
 cb = colorbar;
-clim([1 16])
-title(cb, 'c^* (\mu M)', 'Interpreter', 'tex')
 
-cb.Ticks = linspace(1, 16, 16);
-cb.TickLabels = round(precise_oxygen_levels, 2);
+clim([1.5 numel(precise_oxygen_levels)+0.5])
+title(cb, '$c^* (\mu M)$', 'Interpreter', 'latex')
+cb.Ticks = linspace(1, numel(precise_oxygen_levels), numel(precise_oxygen_levels));
+cb.TickLabels = round(precise_oxygen_levels(1:1:end), 2);
+legend('Location','northwest')
 
 savefig(string(plot_path)+'Jox_vs_dist_int'+string(temp_string)+'.fig')
 saveas(fig, string(plot_path)+'Jox_vs_dist_int'+string(temp_string)+'.png')
@@ -560,17 +592,16 @@ end
 xlim([4, 36])
 ylim([-25, 140])
 mean(X2)
-xlabel('distance to oocyte center (\mu m)');
-ylabel('predicted J_{ox} (\mu M/s)');
+xlabel('distance to oocyte center $(\mu m)$', 'Interpreter','latex');
+ylabel('predicted $J_{ox} (\mu M/s)$', 'Interpreter','latex');
 %title('predicted J_{ox}(v_{max}(r), k_{m}(r), c(r))')
-set(gca,'FontSize',15);
+set(gca,'FontSize',19);
 
 cb = colorbar;
-clim([1 16])
-title(cb, 'c^* (\mu M)', 'Interpreter', 'tex')
-
-cb.Ticks = linspace(1, 16, 16);
-cb.TickLabels = round(precise_oxygen_levels, 2);
+clim([1.5 numel(precise_oxygen_levels)+0.5])
+title(cb, '$c^* (\mu M)$', 'Interpreter', 'latex')
+cb.Ticks = linspace(1, numel(precise_oxygen_levels), numel(precise_oxygen_levels));
+cb.TickLabels = round(precise_oxygen_levels(1:1:end), 2);
 
 savefig(string(plot_path)+'Jox_vs_dist_int_maxDiff'+string(temp_string)+'.fig')
 saveas(fig, string(plot_path)+'Jox_vs_dist_int_maxDiff'+string(temp_string)+'.png')
@@ -686,6 +717,31 @@ coxy_sinhDec = coxy_sinhFit.("decay_lengths");
 sigma_coxy_sinhDec = coxy_sigmaSinhFit.("sigma_decay_lengths");
 
 
+%% plot gamma over lambda jox
+
+fig = figure('Renderer', 'painters', 'Position', [10 10 800 600]);
+cs = viridis(16);
+colormap(cs)
+
+gamma = mean(jox_data_mitoDist, 2)./mean(cOxy_all(2, :, :), 3)';
+hold on
+for oxy=1:16
+   
+plot(jox_sinhDec(oxy), gamma(oxy),'o', 'Color',cs(oxy, :), 'LineWidth',1.5, ...
+        'MarkerSize', 10)
+end
+xlabel('$\lambda_{J_{ox}}$', 'Interpreter','latex')
+ylabel('$\langle J_{ox}\rangle_r / \langle\hat{c}\rangle_r$', 'Interpreter','latex')
+set(gca,'FontSize',19);
+xlim([6 26])
+
+cb = colorbar;
+clim([precise_oxygen_levels(1) precise_oxygen_levels(end)])
+title(cb, 'c_{oxy} (\mu M)', 'Interpreter', 'tex')
+cb.Ticks = round(linspace(precise_oxygen_levels(1), precise_oxygen_levels(end), 10), 3);
+
+savefig(string(plot_path)+'joxCoxyGamma_over_lambdaJox'+string(temp_string)+'.fig')
+saveas(fig, string(plot_path)+'joxCoxyGamma_over_lambdaJox'+string(temp_string)+'.png')
 %% plot all decay lengths (J_ox and c_oxy, both methods) as a function of oxygen
 fig = figure(5);
 hold on
@@ -766,24 +822,29 @@ y_weights = 1./sigma_jox_sinhDec;
 
 fitrange = linspace(min(coxy_sinhDec), max(coxy_sinhDec), 100);
 
-plot(fitrange, linear_model(fitrange, p), 'LineWidth', 1.5, 'Color','red', ...
-    'DisplayName','lin. fit slope m='+string(p(1)))
+plot(fitrange, linear_model(fitrange, p), 'LineWidth', 1.5, 'Color','black', ...
+    'LineStyle', '--','DisplayName','lin. fit slope m='+string(p(1)))
 
 ylim([5, 30])
 
 xlim([18, 110])
-set(gca,'FontSize',15)
-xlabel('\lambda_{c} (\mu m)')
-ylabel('\lambda_{J_{ox}} (\mu m)')
-title('J_{ox} versus c gradient decay length', 'Interpreter','tex')
+set(gca,'FontSize',19)
+xlabel('$\lambda_{\hat{c}} (\mu m)$', 'Interpreter','latex')
+ylabel('$\lambda_{J_{ox}} (\mu m)$', 'Interpreter','latex')
+title('gradient decay lengths of $J_{ox}$ and $\hat{c}$', 'Interpreter','latex')
 
 cb = colorbar;
 clim([1 16])
 title(cb, 'c^* (\mu M)', 'Interpreter', 'tex')
 
-cb.Ticks = linspace(1, 16, 16);
-cb.TickLabels = round(precise_oxygen_levels, 2);
-legend('Location','southeast')
+clim([1.5 numel(precise_oxygen_levels)+0.5])
+title(cb, '$c^* (\mu M)$', 'Interpreter', 'latex')
+cb.Ticks = linspace(1, numel(precise_oxygen_levels), numel(precise_oxygen_levels));
+cb.TickLabels = round(precise_oxygen_levels(1:1:end), 2);
+
+% cb.Ticks = linspace(1, 16, 16);
+% cb.TickLabels = round(precise_oxygen_levels, 2);
+legend('Location','southeast', 'Interpreter','latex')
 
 savefig(string(plot_path)+'LambdaJox_vs_lambdaCox'+string(temp_string)+'.fig')
 saveas(fig, string(plot_path)+'LambdaJox_vs_lambdaCox'+string(temp_string)+'.png')
