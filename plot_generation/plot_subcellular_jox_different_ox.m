@@ -16,14 +16,14 @@ num_oxygen_ranges={[0, 0.1], ...
                    [1.2, 1.4], [1.4, 1.6], [1.6, 1.8], [1.8, 2.0],...
                    [2.0, 2.8], [2.8, 3.6], [3.6, 4.4], [4.4, 5.2]};
 
-% temp_resolved = false;
-% data_path = "/home/mx/mitoFluxGradients/data/";
-% pp_path = '../data/EXP_published/postprocessing_results/';
-% plot_path = '../data/EXP_published/plots/';
-temp_resolved = true;
+temp_resolved = false;
 data_path = "/home/mx/mitoFluxGradients/data/";
-pp_path = '../data/EXP_temperatureResolved/postprocessing_results/';
-plot_path = '../data/EXP_temperatureResolved/plots/';
+pp_path = '../data/EXP_published/postprocessing_results/';
+plot_path = '../data/EXP_published/plots/';
+% temp_resolved = true;
+% data_path = "/home/mx/mitoFluxGradients/data/";
+% pp_path = '../data/EXP_temperatureResolved/postprocessing_results/';
+% plot_path = '../data/EXP_temperatureResolved/plots/';
 
 load(data_path + 'exp_solubilities.mat')
 load(data_path + 'exp_temperatures.mat')
@@ -62,14 +62,14 @@ colormap(cs)
 
 hold on
 
-xlabel('distance to oocyte center ($\mu m$)', 'Interpreter','latex');
-ylabel('$\textrm{J}_{\textrm{ox}}$ ($\mu M/s$)', 'Interpreter','latex');
+xlabel('distance to oocyte center [$\mu \mathrm{m}$]', 'Interpreter','latex');
+ylabel('$\textrm{J}_{\textrm{ox}}$ [$\mu \mathrm{M}/s$]', 'Interpreter','latex');
 
 set(gca,'FontSize',15);
 
 cb = colorbar;
 clim([0.5 4.5])
-title(cb, 'T ($^\circ$C)', 'Interpreter', 'latex')
+title(cb, 'T [$^\circ$C]', 'Interpreter', 'latex')
 
 cb.Ticks = linspace(1, 4, 4);
 kelvin_temps = temperature(1:end-1)+273.15;
@@ -77,7 +77,7 @@ cb.TickLabels = temperature(1:end-1);
 
 max_oxy = 50; % muM
 min_oxy = 20;
-title_string = 'average over '+string(min_oxy)+'$< c^* <$'+string(max_oxy)+'$\mathrm{\mu M}$';
+title_string = 'average over '+string(min_oxy)+'$< c^* <$'+string(max_oxy)+' $\mathrm{\mu M}$';
 title(title_string, 'Interpreter','latex')
 
 xlim([4, 36])
@@ -154,11 +154,11 @@ saveas(fig, string(plot_path)+'Jox_vs_dist_emp_tempComp.svg')
 %% simple plot of J_ox gradients for different outside oxygen
 
 % subplot with all oxygen levels included
-fig = figure('Renderer', 'painters', 'Position', [10 10 600 400]);
+fig = figure('Renderer', 'painters', 'Position', [10 10 900 600]);
 cs = flip(viridis(20));
 colormap(cs)
 
-title(temp_string, 'Interpreter','none')
+%title(temp_string, 'Interpreter','none')
 
 hold on;
 for k=1:numel(oxygen_ranges)
@@ -171,8 +171,8 @@ for k=1:numel(oxygen_ranges)
              std(jox_cell_kn_all(:, 2:end), 'omitnan')./sqrt(size(jox_cell_kn_all(:, 2:end),1)),...
              'o', 'MarkerSize',10,'LineWidth',1.5, 'Color',cs(k, :));
 
-    xlabel('distance from cell center $(\mu m)$', 'Interpreter','latex');
-    ylabel('$J_{ox} (\mu M/s)$', 'Interpreter','latex');
+    xlabel('distance from cell center $[\mu \mathrm{m}]$', 'Interpreter','latex');
+    ylabel('$\mathrm{J}_{\mathrm{ox}} [\mu \mathrm{M}/\mathrm{s}]$', 'Interpreter','latex');
     
     ylim([-18, 140])
 
@@ -185,24 +185,24 @@ xlim([4, 36])
 
 cb = colorbar;
 clim([1.5 numel(precise_oxygen_levels)+0.5])
-title(cb, '$c^* (\mu M)$', 'Interpreter', 'latex')
+title(cb, '$\mathrm{c}^* [\mu \mathrm{M}]$', 'Interpreter', 'latex')
 cb.Ticks = linspace(1, numel(precise_oxygen_levels), numel(precise_oxygen_levels));
 cb.TickLabels = round(precise_oxygen_levels(1:1:end), 2);
 
-savefig(string(plot_path)+'Jox_vs_dist_emp'+string(temp_string)+'.fig')
-saveas(fig, string(plot_path)+'Jox_vs_dist_emp'+string(temp_string)+'.png')
-saveas(fig, string(plot_path)+'Jox_vs_dist_emp'+string(temp_string)+'.svg')
+
 
 
 % subplot with 3 maximally different levels
 
-fig2 = figure('Renderer', 'painters', 'Position', [10 10 600 400]);
+axes(Position=[.23 .7 .2 .2])
+box on
+
+%fig2 = figure('Renderer', 'painters', 'Position', [10 10 600 400]);
 cs = flip(viridis(20));
 colormap(cs)
 
 title(temp_string, 'Interpreter','none')
-
-hold on;
+hold on
 for k=[1, 2, numel(oxygen_ranges)]
     
     dist_all=oxygen_ranges_data{k}.dist_all;
@@ -213,8 +213,8 @@ for k=[1, 2, numel(oxygen_ranges)]
              std(jox_cell_kn_all(:, 2:end), 'omitnan')./sqrt(size(jox_cell_kn_all(:, 2:end),1)),...
              'o', 'MarkerSize',10,'LineWidth',1.5, 'Color',cs(k, :));
 
-    xlabel('distance from cell center $(\mu m)$', 'Interpreter','latex');
-    ylabel('$J_{ox} (\mu M/s)$', 'Interpreter','latex');
+    %xlabel('distance from cell center $(\mu m)$', 'Interpreter','latex');
+    %ylabel('$J_{ox} (\mu M/s)$', 'Interpreter','latex');
     
     ylim([-18, 100])
 
@@ -225,15 +225,19 @@ end
 xlim([4, 36])
 %ylim([-25, 140])
 
-cb = colorbar;
-clim([1.5 numel(precise_oxygen_levels)+0.5])
-title(cb, '$c^* (\mu M)$', 'Interpreter', 'latex')
-cb.Ticks = linspace(1, numel(precise_oxygen_levels), numel(precise_oxygen_levels));
-cb.TickLabels = round(precise_oxygen_levels(1:1:end), 2);
 
-savefig(string(plot_path)+'Jox_vs_dist_emp_maxDiff'+string(temp_string)+'.fig')
-saveas(fig2, string(plot_path)+'Jox_vs_dist_emp_maxDiff'+string(temp_string)+'.png')
-saveas(fig2, string(plot_path)+'Jox_vs_dist_emp_maxDiff'+string(temp_string)+'.svg')
+savefig(string(plot_path)+'Jox_vs_dist_emp'+string(temp_string)+'.fig')
+saveas(fig, string(plot_path)+'Jox_vs_dist_emp'+string(temp_string)+'.png')
+saveas(fig, string(plot_path)+'Jox_vs_dist_emp'+string(temp_string)+'.svg')
+% cb = colorbar;
+% clim([1.5 numel(precise_oxygen_levels)+0.5])
+% title(cb, '$c^* (\mu M)$', 'Interpreter', 'latex')
+% cb.Ticks = linspace(1, numel(precise_oxygen_levels), numel(precise_oxygen_levels));
+% cb.TickLabels = round(precise_oxygen_levels(1:1:end), 2);
+
+%savefig(string(plot_path)+'Jox_vs_dist_emp_maxDiff'+string(temp_string)+'.fig')
+%saveas(fig2, string(plot_path)+'Jox_vs_dist_emp_maxDiff'+string(temp_string)+'.png')
+%saveas(fig2, string(plot_path)+'Jox_vs_dist_emp_maxDiff'+string(temp_string)+'.svg')
 
 %% plot Jox as a function of subcellular oxygen for all rings
 

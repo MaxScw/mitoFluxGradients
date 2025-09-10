@@ -232,10 +232,10 @@ for temp=1:numel(temps)
 
 end
 legend('Location','southeast', 'Interpreter','latex')
-set(gca,'FontSize',19)
-xlabel('temperature ($^\circ$C)', 'Interpreter','latex')
-ylabel('$\lambda_{J_{ox}}$ ($\mu m$)', 'Interpreter','latex')
-title('$\lambda( J_{ox})$ versus temperature', 'Interpreter','latex')
+set(gca,'FontSize',15)
+xlabel('temperature [$^\circ$C]', 'Interpreter','latex')
+ylabel('$\lambda_{\mathrm{J}_{\mathrm{ox}}}$ [$\mu \mathrm{m}$]', 'Interpreter','latex')
+title('$\lambda( \mathrm{J}_{\mathrm{ox}})$ versus temperature', 'Interpreter','latex')
 
 savefig(string(plot_path)+'Jox_vs_temp.fig')
 saveas(fig, string(plot_path)+'Jox_vs_temp.png')
@@ -335,52 +335,153 @@ saveas(fig, string(plot_path)+'Coxy_vs_cext.png')
 
 %% plot of ring-averaged (whole-cell) Jox as a function of temperature
 
+fig = figure('Renderer', 'painters', 'Position', [10 10 600 400]);
+set(gca,'FontSize',15)
+
 % get whole-cell Jox by weighted average over Jox(r) for all temperatures
 temps = [22 28 31 36];
-ring_averaged_jox_list = [];
-ring_averaged_sigma_jox_list = [];
+ring_averaged_jox_list_low = [];
+ring_averaged_sigma_jox_list_low = [];
+
+ring_averaged_jox_list_mid = [];
+ring_averaged_sigma_jox_list_mid = [];
+
+ring_averaged_jox_list_high = [];
+ring_averaged_sigma_jox_list_high = [];
 
 cs = plasma(numel(temps));
 colormap(cs)
+cs2 = flip(viridis(16));
 
-for temp_ind=1:numel(temps)
-    temp_string = '_T'+string(temps(temp_ind))+'C';
+low_oxy = 5;
+mid_oxy = 20;
+high_oxy = 50;
+offset = 0.4;
+
+for temp=1:numel(temps)
+    if temp==1
+        vis = 'on';
+    else
+        vis = 'off';
+    end
+    [lowv, lowi] = min(abs(precise_oxy_level_list{temp}-low_oxy));
+    [midv, midi] = min(abs(precise_oxy_level_list{temp}-mid_oxy));
+    [maxv, maxi] = min(abs(precise_oxy_level_list{temp}-high_oxy));
+
+    temp_string = '_T'+string(temps(temp))+'C';
 load(string(pp_path)+'plot_data_multiple_oxy_ranges'+string(temp_string)+'.mat');
-% pick data set for highest external oxygen
-ind = 16;
-data = [mean(oxygen_ranges_data{ind}.dist_all, 'omitnan');...
-        mean(oxygen_ranges_data{ind}.jox_cell_kn_all, 'omitnan')];
-data_stderr = [std(oxygen_ranges_data{ind}.dist_all./sqrt(size(oxygen_ranges_data{ind}.dist_all,1)), 'omitnan');...
-               std(oxygen_ranges_data{ind}.jox_cell_kn_all./sqrt(size(oxygen_ranges_data{ind}.jox_cell_kn_all,1)), 'omitnan')];
+% low oxygen
+ring_averaged_jox_list = [];
+ring_averaged_sigma_jox_list = [];
+for ind=1:lowi
+    data = [mean(oxygen_ranges_data{ind}.dist_all, 'omitnan');...
+            mean(oxygen_ranges_data{ind}.jox_cell_kn_all, 'omitnan')];
+    data_stderr = [std(oxygen_ranges_data{ind}.dist_all./sqrt(size(oxygen_ranges_data{ind}.dist_all,1)), 'omitnan');...
+                   std(oxygen_ranges_data{ind}.jox_cell_kn_all./sqrt(size(oxygen_ranges_data{ind}.jox_cell_kn_all,1)), 'omitnan')];
+    
+    inner_radius = data(1, :);
+    inner_radius(2:end) = data(1, 1:end-1);
+    inner_radius(1) = 0;
+    ring_weights = ((data(1, :).^2 - inner_radius.^2))./(data(1, end).^2);
+    ring_averaged_jox = sum(ring_weights.*data(2, :));
+    ring_averaged_sigma_jox = sum(ring_weights.*data_stderr(2, :));
+    
+    ring_averaged_jox_list = [ring_averaged_jox_list ring_averaged_jox];
+    ring_averaged_sigma_jox_list = [ring_averaged_sigma_jox_list ring_averaged_sigma_jox];
+end
+ring_averaged_sigma_jox_list_low = [ring_averaged_sigma_jox_list_low mean(ring_averaged_sigma_jox_list)];
+ring_averaged_jox_list_low = [ring_averaged_jox_list_low mean(ring_averaged_jox_list)];
 
-inner_radius = data(1, :);
-inner_radius(2:end) = data(1, 1:end-1);
-inner_radius(1) = 0;
-ring_weights = ((data(1, :).^2 - inner_radius.^2))./(data(1, end).^2);
-ring_averaged_jox = sum(ring_weights.*data(2, :));
-ring_averaged_sigma_jox = sum(ring_weights.*data_stderr(2, :));
+% mid oxygen
+ring_averaged_jox_list = [];
+ring_averaged_sigma_jox_list = [];
+for ind=lowi:midi
+    data = [mean(oxygen_ranges_data{ind}.dist_all, 'omitnan');...
+            mean(oxygen_ranges_data{ind}.jox_cell_kn_all, 'omitnan')];
+    data_stderr = [std(oxygen_ranges_data{ind}.dist_all./sqrt(size(oxygen_ranges_data{ind}.dist_all,1)), 'omitnan');...
+                   std(oxygen_ranges_data{ind}.jox_cell_kn_all./sqrt(size(oxygen_ranges_data{ind}.jox_cell_kn_all,1)), 'omitnan')];
+    
+    inner_radius = data(1, :);
+    inner_radius(2:end) = data(1, 1:end-1);
+    inner_radius(1) = 0;
+    ring_weights = ((data(1, :).^2 - inner_radius.^2))./(data(1, end).^2);
+    ring_averaged_jox = sum(ring_weights.*data(2, :));
+    ring_averaged_sigma_jox = sum(ring_weights.*data_stderr(2, :));
+    
+    ring_averaged_jox_list = [ring_averaged_jox_list ring_averaged_jox];
+    ring_averaged_sigma_jox_list = [ring_averaged_sigma_jox_list ring_averaged_sigma_jox];
+end
+ring_averaged_sigma_jox_list_mid = [ring_averaged_sigma_jox_list_mid mean(ring_averaged_sigma_jox_list)];
+ring_averaged_jox_list_mid = [ring_averaged_jox_list_mid mean(ring_averaged_jox_list)];
 
-ring_averaged_jox_list = [ring_averaged_jox_list ring_averaged_jox];
-ring_averaged_sigma_jox_list = [ring_averaged_sigma_jox_list ring_averaged_sigma_jox];
+% high oxygen
+ring_averaged_jox_list = [];
+ring_averaged_sigma_jox_list = [];
+for ind=maxi
+    maxi
+    data = [mean(oxygen_ranges_data{ind}.dist_all, 'omitnan');...
+            mean(oxygen_ranges_data{ind}.jox_cell_kn_all, 'omitnan')];
+    data_stderr = [std(oxygen_ranges_data{ind}.dist_all./sqrt(size(oxygen_ranges_data{ind}.dist_all,1)), 'omitnan');...
+                   std(oxygen_ranges_data{ind}.jox_cell_kn_all./sqrt(size(oxygen_ranges_data{ind}.jox_cell_kn_all,1)), 'omitnan')];
+    
+    inner_radius = data(1, :);
+    inner_radius(2:end) = data(1, 1:end-1);
+    inner_radius(1) = 0;
+    ring_weights = ((data(1, :).^2 - inner_radius.^2))./(data(1, end).^2);
+    ring_averaged_jox = sum(ring_weights.*data(2, :));
+    ring_averaged_sigma_jox = sum(ring_weights.*data_stderr(2, :));
+    
+    ring_averaged_jox_list = [ring_averaged_jox_list ring_averaged_jox]
+    ring_averaged_sigma_jox_list = [ring_averaged_sigma_jox_list ring_averaged_sigma_jox];
+end
+ring_averaged_sigma_jox_list_high = [ring_averaged_sigma_jox_list_high mean(ring_averaged_sigma_jox_list)];
+ring_averaged_jox_list_high = [ring_averaged_jox_list_high mean(ring_averaged_jox_list)];
+
 end
 
 % plotting
-fig = figure('Renderer', 'painters', 'Position', [10 10 600 400]);
-set(gca,'FontSize',15)
+
 xlim([21, 37])
 hold on
 
 for t=1:4
-plot(temps(t), ring_averaged_jox_list(t), 'o',...
-     'Color', cs(t, :), 'MarkerSize',15, 'LineWidth',1.5)
-errorbar(temps(t), ring_averaged_jox_list(t), ring_averaged_sigma_jox_list(t), ...
-         ring_averaged_sigma_jox_list(t), 'o',...
-         'Color', cs(t, :), 'MarkerSize',15, 'LineWidth',2)
+    if t==1
+        vis='on';
+    else
+        vis='off';
+    end
+    
+plot(temps(t), ring_averaged_jox_list_low(t), 'o',...
+     'Color', cs2(lowi, :), 'MarkerSize',15, 'LineWidth',1.5,...
+     'DisplayName',"$\mathrm{c}^*\approx$"+string(low_oxy), 'HandleVisibility',vis)
+errorbar(temps(t), ring_averaged_jox_list_low(t), ring_averaged_sigma_jox_list_low(t), ...
+         ring_averaged_sigma_jox_list_low(t), 'o',...
+         'Color', cs2(lowi, :), 'MarkerSize',15, 'LineWidth',1.5, ...
+         HandleVisibility='off')
+
+
+plot(temps(t)+offset, ring_averaged_jox_list_mid(t), 'o',...
+     'Color', cs2(midi, :), 'MarkerSize',15, 'LineWidth',1.5, ...
+     'DisplayName',"$\mathrm{c}^*\approx$"+string(mid_oxy), 'HandleVisibility',vis)
+errorbar(temps(t)+offset, ring_averaged_jox_list_mid(t), ring_averaged_sigma_jox_list_mid(t), ...
+         ring_averaged_sigma_jox_list_mid(t), 'o',...
+         'Color', cs2(midi, :), 'MarkerSize',15, 'LineWidth',1.5, ...
+         'HandleVisibility','off')
+
+plot(temps(t)+offset*2, ring_averaged_jox_list_high(t), 'o',...
+     'Color', cs2(maxi, :), 'MarkerSize',15, 'LineWidth',1.5, ...
+     'DisplayName',"$\mathrm{c}^*\approx$"+string(high_oxy), 'HandleVisibility',vis)
+errorbar(temps(t)+offset*2, ring_averaged_jox_list_high(t), ring_averaged_sigma_jox_list_high(t), ...
+         ring_averaged_sigma_jox_list_high(t), 'o',...
+         'Color', cs2(maxi, :), 'MarkerSize',15, 'LineWidth',1.5, ...
+         HandleVisibility='off')
 end
-xlabel('temperature ($^\circ$C)', 'Interpreter','latex')
+xlabel('temperature [$^\circ$C]', 'Interpreter','latex')
 %ylabel(' $\overline{\textrm{J}}_{\textrm{ox}}(\textrm{r})$ ($\muM/s$)', 'Interpreter', 'latex')
-ylabel('$\overline{\textrm{J}}_{\textrm{ox}}$ ($\mu M/s$)', 'Interpreter','latex')
-title('whole-cell average $J_{ox}$ at highest $c^*$', 'Interpreter','latex')
+ylabel('$\overline{\textrm{J}}_{\textrm{ox}}$ [$\mu \mathrm{M}/\mathrm{s}$]', 'Interpreter','latex')
+title('whole-cell average $\mathrm{J}_{\mathrm{ox}}$ versus temperature', 'Interpreter','latex')
+legend('Interpreter','latex', 'Location','northwest')
+set(gca,'FontSize',15)
 
 savefig(string(plot_path)+'ringAverageJox_vs_temp.fig')
 saveas(fig, string(plot_path)+'ringAverageJox_vs_temp.png')
@@ -424,7 +525,7 @@ for ring=start_ring:10
     
     subplot(1, 3, 1)
     set(gca,'FontSize',19)
-    xlabel('1/T (1/K)', 'Interpreter','latex')
+    xlabel('1/T [1/K]', 'Interpreter','latex')
     
     %title('eff. reaction rate per ring')
     %xlim([294, 312])
@@ -435,7 +536,7 @@ for ring=start_ring:10
     log_rate = log(vMax_temps./(kelvin_temps));
     sigma_log_rate = sqrt((sigma_vMax_temps./vMax_temps).^2 );
     else
-    ylabel('log($k_{m}/T$)', 'Interpreter','latex')
+    ylabel('log($\mathrm{K}_{\mathrm{m}}/\mathrm{T}$)', 'Interpreter','latex')
     
     log_rate = log(kM_temps./(kelvin_temps));
     sigma_log_rate = sqrt((sigma_kM_temps./kM_temps).^2);
@@ -473,9 +574,9 @@ for ring=start_ring:10
     deltaG_bykb = [deltaG_bykb, -p(1)];
 
     subplot(1, 3, 2)
-    xlabel('r ($\mu m$)', 'Interpreter','latex')
+    xlabel('r [$\mu$m]', 'Interpreter','latex')
     if km == true
-    ylabel('$\Delta G_{k_m}$ ($J/mol$)', 'Interpreter','latex')
+    ylabel('$\Delta \mathrm{G}_{\mathrm{K}_\mathrm{m}}$ [$\mathrm{J}/\mathrm{mol}$]', 'Interpreter','latex')
     else
     ylabel('$\Delta G_{v_{max}}$ ($J/mol$)', 'Interpreter','latex')
     end
@@ -487,7 +588,7 @@ for ring=start_ring:10
     %errorbar(1./kelvin_temps, kM_temps, sigma_vMax_temps)
     
     
-    collaps_val = (log_rate-p(2)).*(1./(p(1)*100))
+    collaps_val = (log_rate-p(2)).*(1./(p(1)*100));
     sigma_collaps_val = collaps_val.*sqrt((sigma_log_rate./log_rate).^2 + ...
                                           (sigma_p(1)/p(1))^2);
 
@@ -495,23 +596,28 @@ for ring=start_ring:10
     subplot(1, 3, 3)
     set(gca,'FontSize',19)
     hold on
+
+    xlabel('r [$\mu$m]', 'Interpreter','latex')
     
     errorbar(1./kelvin_temps, collaps_val, sigma_collaps_val, sigma_collaps_val,...
-             'o', 'MarkerSize',15, 'LineWidth',1.5, 'Color',cs(ring, :))
+             'o', 'MarkerSize',15, 'LineWidth',1.5, 'Color',cs(ring, :), ...
+             HandleVisibility='off')
     
     plot(1./kelvin_temps, collaps_val,...
-             'MarkerSize',15, 'LineWidth',1.5, 'Color',cs(ring, :))
+             'MarkerSize',15, 'LineWidth',1.5, 'Color',cs(ring, :), ...
+             HandleVisibility='off')
     if ring == 10
-    plot(1./kelvin_temps, 1./kelvin_temps,...
+    plot(linspace(3.2*1e-3, 3.41*1e-3, 100), linspace(3.2*1e-3, 3.41*1e-3, 100),...
              'MarkerSize',15, 'LineWidth',1.5, 'Color','black', ...
              'LineStyle','--', 'DisplayName','slope = 1')
-    
+    xlim([3.2*1e-3, 3.41*1e-3])
+    legend(Location="northwest")
     end
     if km == false
-    ylabel('$(\log{(v_{max}/T)}--\log{B}) \cdot -R/\Delta G $', 'Interpreter','latex')
+    ylabel('$(\log{(\mathrm{v}_{\mathrm{max}}/\mathrm{T})}--\log{\mathrm{B}}) \cdot -R/\Delta G $', 'Interpreter','latex')
 
     else
-    ylabel('log($k_{m}/T$)', 'Interpreter','latex')
+    ylabel('$(-\mathrm{R}/\Delta \mathrm{G}_{\mathrm{K}_\mathrm{m}}) \cdot \log(\mathrm{K}_{\mathrm{m}}/\mathrm{T})$', 'Interpreter','latex')
     
   
     end
@@ -521,7 +627,7 @@ end
 
 cb = colorbar;
 clim([0.5 10.5-start_ring])
-title(cb, 'r ($\mu m$)', 'Interpreter', 'latex')
+title(cb, 'r [$\mu$m]', 'Interpreter', 'latex')
 
 cb.Ticks = linspace(1, 10-start_ring, 10-start_ring);
 cb.TickLabels = dist(start_ring:end);
@@ -529,9 +635,11 @@ cb.TickLabels = dist(start_ring:end);
 if km == true
 savefig(string(plot_path)+'ringWiseKmReactionRate_vs_temp.fig')
 saveas(fig2, string(plot_path)+'ringWiseKmReactionRate_vs_temp.png')
+saveas(fig2, string(plot_path)+'ringWiseKmReactionRate_vs_temp.svg')
 else
 savefig(string(plot_path)+'ringWiseVmaxReactionRate_vs_temp.fig')
 saveas(fig2, string(plot_path)+'ringWiseVmaxReactionRate_vs_temp.png')
+saveas(fig2, string(plot_path)+'ringWiseVmaxReactionRate_vs_temp.svg')
 end
 %%
 p
@@ -541,7 +649,7 @@ p
 rescaled_params = false;
 
 start_ring = 2;
-fig = figure('Renderer', 'painters', 'Position', [10 10 1000 600]);
+fig = figure('Renderer', 'painters', 'Position', [10 10 600 400]);
 
 set(gca,'FontSize',15)
 cs = plasma(numel(temps));
@@ -563,7 +671,7 @@ for temp=1:numel(temps)
     hold on
     if rescaled_params==true
         vMax = vMax_list{temp}.vMax_all(2, start_ring:end)./(vMax_list{temp}.vMax_all(2, end)*temps(temp));
-        ylabel('v_{max}/(v_{max}(R) T) (\mu M/s)')
+        ylabel('$\mathrm{V}_{\mathrm{max}}/(\mathrm{V}_{\mathrm{max}}(\mathrm{R}) \mathrm{T})$ ($\mu \mathrm{M}/\mathrm{s}$)', 'Interpreter','latex')
     else
         vMax = vMax_list{temp}.vMax_all(2, start_ring:end);
         sigma_vMax = sigma_vMax_list{temp}.sigma_vMax_all(2, start_ring:end);
@@ -596,7 +704,7 @@ for temp=1:numel(temps)
         vMaxFit_temp_list = [vMaxFit_temp_list, p];
         sigma_vMaxFit_temp_list = [sigma_vMaxFit_temp_list, sigma_p];
 
-        ylabel('v_{max} (\mu M/s)')
+        ylabel('$\mathrm{V}_{\mathrm{max}}$ [$\mu$ M/s]', 'Interpreter','latex')
     end
     errorbar(dist(start_ring:end), vMax, sigma_vMax,...
         'o', 'MarkerSize',15, 'LineWidth',1.5, 'Color',cs(temp, :))
@@ -605,7 +713,7 @@ for temp=1:numel(temps)
         'MarkerSize',15, 'LineWidth',1.5, 'Color',cs(temp, :))
     
     xlim([0, 36])
-    xlabel('distance (\mu m)')
+    xlabel('distance [$\mu$m]', 'Interpreter','latex')
 
     subplot(1, 2, 2)
     set(gca,'FontSize',15)
@@ -641,7 +749,7 @@ for temp=1:numel(temps)
         kMFit_temp_list = [kMFit_temp_list, p];
         sigma_kMFit_temp_list = [sigma_kMFit_temp_list, sigma_p];
 
-        ylabel('k_M (\mu M)')
+        ylabel('$\mathrm{K}_\mathrm{m}$ [$\mu$M]', 'Interpreter','latex')
     end
     errorbar(dist(start_ring:end), kM, sigma_kM,...
         'o', 'MarkerSize',15, 'LineWidth',1.5, 'Color',cs(temp, :))
@@ -649,13 +757,12 @@ for temp=1:numel(temps)
     plot(dist_range, linear_model(dist_range, p),...
         'MarkerSize',15, 'LineWidth',1.5, 'Color',cs(temp, :))
     xlim([0, 36])
-    xlabel('distance (\mu m)')
-    
+    xlabel('distance [$\mu$m]', 'Interpreter','latex')
 end
 
 cb = colorbar;
 clim([0.5 4.5])
-title(cb, 'T (K)', 'Interpreter', 'tex')
+title(cb, 'T [K]', 'Interpreter', 'latex')
 
 cb.Ticks = linspace(1, 4, 4);
 cb.TickLabels = kelvin_temps;
@@ -666,10 +773,10 @@ if rescaled_params==true
 else
     savefig(string(plot_path)+'vMaxKm_vs_dist_temp.fig')
     saveas(fig, string(plot_path)+'vMaxKm_vs_dist_temp.png')
+    saveas(fig, string(plot_path)+'vMaxKm_vs_dist_temp.svg')
 end
 
-savefig(string(plot_path)+'JoxmmParamProfile_vs_temp.fig')
-saveas(fig, string(plot_path)+'JoxmmParamProfile_vs_temp.png')
+
 
 %% visualise dependency of k_m(r) fit parameters on temperature
 
