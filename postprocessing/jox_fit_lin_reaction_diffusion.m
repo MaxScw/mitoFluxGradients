@@ -54,7 +54,7 @@ for oxy_ind=1:numel(oxygen_ranges)
     precise_oxygen_levels = [precise_oxygen_levels, oxygen_ranges_data{oxy_ind}.o2_levels];
     sigma_precise_oxygen_levels = [sigma_precise_oxygen_levels, mean(oxygen_ranges_data{oxy_ind}.sigma_o2_levels, 'omitnan')];
 end
-
+%%
 
 if temp_resolved==true
 precise_oxygen_levels = solubility(temp_ind).*precise_oxygen_levels./20.946;
@@ -73,7 +73,7 @@ R_squareds = [];
 
 % get mean data + do fits
 for ind=1:numel(oxygen_ranges)
-    ind
+    
     data = [mean(oxygen_ranges_data{ind}.dist_all, 'omitnan');...
             mean(oxygen_ranges_data{ind}.jox_cell_kn_all, 'omitnan')];
 
@@ -141,130 +141,3 @@ fit_data_gradient{3} = chi_squareds;
 fit_data_gradient{4} = R_squareds;
 
 save(pp_path + "gradient_fit_linear_model"+string(temp_string)+".mat", 'fit_data_gradient');
-
-%%
-mean(chi_squareds)
-mean(R_squareds)
-
-%%
-% subplot(1, 3, 1)
-% plot(fit_params(1, :))
-% subplot(1, 3, 2)
-% plot(fit_params(2, :))
-% subplot(1, 3, 3)
-
-plot(fit_params(3, :)./mean_mito_density)
-
-figure(2)
-plot(R_squareds, 'o', 'HandleVisibility','off')
-yline(mean(R_squareds), 'DisplayName','\langle R^2 \rangle='+string(mean(R_squareds)))
-legend()
-
-%%
-subplot(2, 2, 4)
-fig = figure('Renderer', 'painters', 'Position', [10 10 1500 500])
-title('linear reaction diffusion model')
-cs = viridis(16);
-colormap(cs)
-
-
-for ind=1:6
-    subplot(1, 3, 1)
-    hold on
-    data = [mean(oxygen_ranges_data{ind}.dist_all, 'omitnan');...
-            mean(oxygen_ranges_data{ind}.jox_cell_kn_all, 'omitnan')];
-    data_stderr = [std(oxygen_ranges_data{ind}.dist_all./sqrt(size(oxygen_ranges_data{ind}.dist_all,1)), 'omitnan');...
-                   std(oxygen_ranges_data{ind}.jox_cell_kn_all./sqrt(size(oxygen_ranges_data{ind}.jox_cell_kn_all,1)), 'omitnan')];
-    % errorbar(data(1, :), data(2, :).*mean_mito_density, data_stderr(2, :), data_stderr(2, :),...
-    %          'o', 'Color', cs(ind, :))
-    
- 
-
-    % USE MITO-DENSITY WEIGHTED JOX DATA
-    mito_weighted_data = data(2, :);%0.5*data(2, :).*mean(mean_mito_density);
-
-    data_stderr = [std(oxygen_ranges_data{ind}.dist_all./sqrt(size(oxygen_ranges_data{ind}.dist_all,1)), 'omitnan');...
-                   std(oxygen_ranges_data{ind}.jox_cell_kn_all./sqrt(size(oxygen_ranges_data{ind}.jox_cell_kn_all,1)), 'omitnan')];
-    mito_weighted_data_stderr = 0.5*mito_weighted_data.*sqrt((data_stderr(2, :)./data(2, :)).^2 + (sigma_mito_weigth./mean_mito_density).^2);
-
-    errorbar(data(1, :), mito_weighted_data, mito_weighted_data_stderr, mito_weighted_data_stderr,...
-             'o', 'Color', cs(ind, :), 'LineWidth',1.5)
-    plot(data(1, :), rd_solver_linear(data(1, :), fit_params(:, ind)), 'Color',cs(ind, :), 'LineWidth',1.5)
-end
-xlabel('distance to oocyte center (\mu m)');
-ylabel('predicted J_{ox} (\mu M/s)');
-%title('predicted J_{ox}(v_{max}(r), k_{m}(r), c(r))')
-set(gca,'FontSize',15);
-
-% cb = colorbar;
-% clim([precise_oxygen_levels(1) precise_oxygen_levels(end)])
-% title(cb, 'c_{oxy} (\mu M)', 'Interpreter', 'tex')
-% cb.Ticks = round(linspace(precise_oxygen_levels(1), precise_oxygen_levels(end), 10), 3);
-
-for ind=7:12
-    subplot(1, 3, 2)
-    hold on
-    data = [mean(oxygen_ranges_data{ind}.dist_all, 'omitnan');...
-            mean(oxygen_ranges_data{ind}.jox_cell_kn_all, 'omitnan')];
-    data_stderr = [std(oxygen_ranges_data{ind}.dist_all./sqrt(size(oxygen_ranges_data{ind}.dist_all,1)), 'omitnan');...
-                   std(oxygen_ranges_data{ind}.jox_cell_kn_all./sqrt(size(oxygen_ranges_data{ind}.jox_cell_kn_all,1)), 'omitnan')];
-    % errorbar(data(1, :), data(2, :).*mean_mito_density, data_stderr(2, :), data_stderr(2, :),...
-    %          'o', 'Color', cs(ind, :))
-
-    % USE MITO-DENSITY WEIGHTED JOX DATA
-    mito_weighted_data = data(2, :);%0.5*data(2, :).*mean(mean_mito_density);
-
-    data_stderr = [std(oxygen_ranges_data{ind}.dist_all./sqrt(size(oxygen_ranges_data{ind}.dist_all,1)), 'omitnan');...
-                   std(oxygen_ranges_data{ind}.jox_cell_kn_all./sqrt(size(oxygen_ranges_data{ind}.jox_cell_kn_all,1)), 'omitnan')];
-    mito_weighted_data_stderr = 0.5*mito_weighted_data.*sqrt((data_stderr(2, :)./data(2, :)).^2 + (sigma_mito_weigth./mean_mito_density).^2);
-
-    errorbar(data(1, :), mito_weighted_data, mito_weighted_data_stderr, mito_weighted_data_stderr,...
-             'o', 'Color', cs(ind, :), 'LineWidth',1.5)
-    plot(data(1, :), rd_solver_linear(data(1, :), fit_params(:, ind)), 'Color',cs(ind, :), 'LineWidth',1.5)
-end
-xlabel('distance to oocyte center (\mu m)');
-ylabel('predicted J_{ox} (\mu M/s)');
-%title('predicted J_{ox}(v_{max}(r), k_{m}(r), c(r))')
-set(gca,'FontSize',15);
-
-% cb = colorbar;
-% clim([precise_oxygen_levels(1) precise_oxygen_levels(end)])
-% title(cb, 'c_{oxy} (\mu M)', 'Interpreter', 'tex')
-% cb.Ticks = round(linspace(precise_oxygen_levels(1), precise_oxygen_levels(end), 10), 3);
-
-for ind=13:16
-    subplot(1, 3, 3)
-    hold on
-    data = [mean(oxygen_ranges_data{ind}.dist_all, 'omitnan');...
-            mean(oxygen_ranges_data{ind}.jox_cell_kn_all, 'omitnan')];
-    data_stderr = [std(oxygen_ranges_data{ind}.dist_all./sqrt(size(oxygen_ranges_data{ind}.dist_all,1)), 'omitnan');...
-                   std(oxygen_ranges_data{ind}.jox_cell_kn_all./sqrt(size(oxygen_ranges_data{ind}.jox_cell_kn_all,1)), 'omitnan')];
-    % errorbar(data(1, :), data(2, :).*mean_mito_density, data_stderr(2, :), data_stderr(2, :),...
-    %          'o', 'Color', cs(ind, :))
-    
-
-    % USE MITO-DENSITY WEIGHTED JOX DATA
-    mito_weighted_data = data(2, :);%0.5*data(2, :).*mean(mean_mito_density);
-
-    data_stderr = [std(oxygen_ranges_data{ind}.dist_all./sqrt(size(oxygen_ranges_data{ind}.dist_all,1)), 'omitnan');...
-                   std(oxygen_ranges_data{ind}.jox_cell_kn_all./sqrt(size(oxygen_ranges_data{ind}.jox_cell_kn_all,1)), 'omitnan')];
-    mito_weighted_data_stderr = 0.5*mito_weighted_data.*sqrt((data_stderr(2, :)./data(2, :)).^2 + (sigma_mito_weigth./mean_mito_density).^2);
-
-    errorbar(data(1, :), mito_weighted_data, mito_weighted_data_stderr, mito_weighted_data_stderr,...
-             'o', 'Color', cs(ind, :), 'LineWidth',1.5)
-    plot(data(1, :), rd_solver_linear(data(1, :), fit_params(:, ind)), 'Color',cs(ind, :), 'LineWidth',1.5)
-end
-xlabel('distance to oocyte center (\mu m)');
-ylabel('predicted J_{ox} (\mu M/s)');
-%title('predicted J_{ox}(v_{max}(r), k_{m}(r), c(r))')
-set(gca,'FontSize',15);
-
-
-
-cb = colorbar;
-clim([precise_oxygen_levels(1) precise_oxygen_levels(end)])
-title(cb, 'c_{oxy} (\mu M)', 'Interpreter', 'tex')
-cb.Ticks = round(linspace(precise_oxygen_levels(1), precise_oxygen_levels(end), 10), 3);
-
-savefig(string(plot_path)+'Jox_vs_dist_linRD.fig')
-saveas(fig, string(plot_path)+'Jox_vs_dist_linRD.png')

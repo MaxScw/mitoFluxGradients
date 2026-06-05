@@ -182,8 +182,7 @@ saveas(fig, string(plot_path)+'LambdaJox_vs_lambdaCox_tempComp.png')
 
 fig = figure('Renderer', 'painters', 'Position', [10 10 600 600],...
     'Color','white');
-fs = 28;
-set(gca,'FontSize',fs)
+set(gca,'FontSize',15)
 % yscale('log')
 %xlim([20+273.5, 40+273.5])
 ylim([5, 30])
@@ -245,8 +244,8 @@ for temp=1:numel(temps)
          'DisplayName',string(high_oxy)+"\,\,\,\,M "+"$\leq c_\mathrm{out}$", 'HandleVisibility','off')
 
 end
-legend('Location','southeast', 'Interpreter','latex')
-set(gca,'FontSize',fs)
+legend('Location','best', 'Interpreter','latex')
+set(gca,'FontSize',19)
 xlabel('temperature [$^\circ$C]', 'Interpreter','latex')
 ylabel('$\lambda_{J_{\mathrm{ox}}}$ [\,\,\,\,m]', 'Interpreter','latex')
 %title('$\lambda( J_{\mathrm{ox}})$ versus temperature', 'Interpreter','latex')
@@ -354,7 +353,7 @@ saveas(fig, string(plot_path)+'Coxy_vs_cext.png')
 
 fig = figure('Renderer', 'painters', 'Position', [10 10 900 600],...
     'Color','white');
-fs = 28
+fs = 26
 
 set(gca,'FontSize',fs)
 
@@ -521,7 +520,7 @@ export_fig(fig, string(plot_path)+'ringAverageJox_vs_temp.eps')
 %% plot eff. reaction rate as function of inverse temperature
 fig2 = figure('Renderer', 'painters', 'Position', [10 10 1800 600],...
     'Color','white');
-fs = 26
+fs = 
 
 start_ring = 2;
 cs = flip(cool(15));
@@ -619,7 +618,7 @@ for ring=start_ring:10
     ylabel('$\Delta G_{v_{max}}$ ($J/mol$)', 'Interpreter','latex')
     end
     %title('eff. activation energy', 'Interpreter','latex')
-    set(gca,'FontSize',fs)
+    set(gca,'FontSize',19)
     hold on
     errorbar(dist(ring), -p(1)*100*8.3, -sigma_p(1)*100*8.3,...
         'o','MarkerSize',15, 'LineWidth',1.5, 'Color',cs(ring, :))
@@ -632,7 +631,7 @@ for ring=start_ring:10
     
     
     subplot(1, 3, 3)
-    set(gca,'FontSize',fs)
+    set(gca,'FontSize',19)
     hold on
 
     xlabel('1/T [1/K]', 'Interpreter','latex')

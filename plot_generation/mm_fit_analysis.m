@@ -122,7 +122,9 @@ for ring=1:10
 end
 
 %% plot michaelis-menten rate law for all rings
-fig = figure('Renderer', 'painters', 'Position', [10 10 700 500]);
+fig = figure('Renderer', 'painters', 'Position', [10 10 900 600],...
+    'Color','white');
+fs = 22;
 
 oxy_range = linspace(0, oxygen_levels(end), 100);
 colors = flip(cool(15));
@@ -149,7 +151,7 @@ errorbar(mean(corr_oxy, 2), mean(flux, 1),...
          mean(sigma_flux, 1), mean(sigma_flux, 1), 'o', 'Color', colors(2, :), ...
          'MarkerSize',10, 'LineWidth',1.5, 'HandleVisibility','off')
 ax=gca;
-set(gca,'FontSize',19);
+set(gca,'FontSize',fs);
 
 %mid
 flux = [];
@@ -170,7 +172,7 @@ errorbar(mean(corr_oxy, 2), mean(flux, 1),...
          'MarkerSize',10, 'LineWidth',1.5, 'HandleVisibility','off')
 hold on;
 ax=gca;
-set(gca,'FontSize',19);
+set(gca,'FontSize',fs);
 
 %high
 flux = [];
@@ -183,28 +185,29 @@ for ring=10
     fitflux = [fitflux; mm_flux(oxy_range, fit_params(:, ring), [])];
 end
 plot(oxy_range, mean(fitflux, 1), 'Color', colors(10, :), 'LineWidth',1.5, ...
-    'DisplayName','J_{ox}^{theory}')
+    'DisplayName','$J_{\mathrm{ox}}^{\mathrm{fit}}$')
 errorbar(mean(corr_oxy, 2), mean(flux, 1),...
          mean(sigma_flux, 1), mean(sigma_flux, 1), 'o', 'Color', colors(10, :), ...
-         'MarkerSize',10, 'LineWidth',1.5, 'DisplayName', 'J_{ox}')
+         'MarkerSize',10, 'LineWidth',1.5, 'DisplayName', '$J_{\mathrm{ox}}$')
 hold on;
 ax=gca;
-set(gca,'FontSize',19);
-legend()
-xlabel('$\hat{c}(r) (\mu M)$', 'Interpreter','latex')
-ylabel('ETC flux $(\mu M/s)$', 'Interpreter','latex')
-title('michaelis-menten rate law fit', 'Interpreter','latex')
+set(gca,'FontSize',fs);
+legend('Interpreter','latex')
+xlabel('$\hat{c}(c_\mathrm{out}, r)$ [\,\,\,\,M]', 'Interpreter','latex')
+ylabel('ETC flux [\,\,\,\,M/s]', 'Interpreter','latex')
+%title('michaelis-menten rate law fit', 'Interpreter','latex')
 xlim([-5 55])
 ylim([-4 135])
 cb = colorbar;
 clim([0.5 10.5])
-title(cb, 'r $(\mu m)$', 'Interpreter', 'latex')
+title(cb, '$r$ [\,\,\,\,m]', 'Interpreter', 'latex')
 dist_per_ring(:, 1)
 cb.Ticks = linspace(1, 10, 10);
 cb.TickLabels = round(mean(dist_per_ring, 2), 2);
 
 savefig(string(plot_path)+'Jox_vs_coxy_mmFit'+string(temp_string)+'.fig')
 saveas(fig, string(plot_path)+'Jox_vs_coxy_mmFit'+string(temp_string)+'.png')
+export_fig(fig, string(plot_path)+'Jox_vs_coxy_mmFit'+string(temp_string)+'.eps')
 
 %% plot coeff. of determination from mm fit for different oxygen levels
 

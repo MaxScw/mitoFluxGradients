@@ -1,14 +1,25 @@
-function concentration=flux_integrator(data, param, const)
+function concentration=theory_flux_integrator(data, param, const, param_profiles)
     % param = [c_star, D]
     c_star = param(1);
     D = param(2);
-   jox = const;
+    if param_profiles==false
+        vmax_expParams = const(1:3);
+        km_linParams = const(4:5);
+        corr_fact = const(6:end, :);
+    else
+        vmax_profile = const(1, :);
+        km_profile = const(2, :);
+    end
 
     function dy_dr=rhs_first_order_system(r, y)
         c = y(1);
         chi = y(2);
         dc_dr = chi;
-        dchi_dr = interp1(data, jox, r)./D - 2.*chi./r;
+        if param_profiles==false
+        dchi_dr = ((interp1(data, corr_fact, r).*exp_model(r, vmax_expParams).*c)./(linear_model(r, km_linParams) + c))./D - 2.*chi./r;
+        else
+        dchi_dr = ((interp1(data, vmax_profile, r).*c)./(interp1(data, km_profile, r) + c))./D - 2.*chi./r;
+        end
         dy_dr = [dc_dr
                  dchi_dr];
     end

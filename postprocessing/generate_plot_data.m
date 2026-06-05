@@ -17,36 +17,41 @@ num_oxygen_ranges={[0, 0.1], ...
                    [2.0, 2.8], [2.8, 3.6], [3.6, 4.4],... 
                    [4.4, 5.2]};
 
-load('/home/mx/mitoFluxGradients/plot_generation/exp_solubilities.mat')
-load('/home/mx/mitoFluxGradients/plot_generation/exp_temperatures.mat')
+load('../data/exp_solubilities.mat')
+load('../data/exp_temperatures.mat')
 
 % temp_resolved = false;
 % pp_path = '../data/EXP_published/postprocessing_results/';
 % plot_path = '../data/EXP_published/plots/';
+% dpath = "../data/EXP_published/FLIM_fitting_results/temp_37C";
 
 temp_resolved = true;
 pp_path = '/home/mx/mitoFluxGradients/data/EXP_temperatureResolved/postprocessing_results/';
 plot_path = '/home/mx/mitoFluxGradients/data/EXP_temperatureResolved/plots';
-temp_ind = 1;
+temp_ind = 5;
 if temp_resolved==true
     temp_string = '_T'+string(temperature(temp_ind))+'C';
-    dpath = '/home/mx/mitoFluxGradients/data/EXP_temperatureResolved/FLIM_fitting_results/temp_'+string(temperature(temp_ind))+'C'
+    dpath = '../data/EXP_temperatureResolved/FLIM_fitting_results/temp_'+string(temperature(temp_ind))+'C';
 else 
     temp_string = '';
 end
 
 
 
-%% read-in of data (not neccessary if read-in data was loaded in cell above)
+%% read-in of data
 
 for oxy_ind=1:numel(oxygen_ranges)
     oxygen_ranges{oxy_ind};
+   
     filename_cellular_kn=dir(dpath + '/' + oxygen_ranges{oxy_ind} + '/' + '*_jox_in_rings_cellular_kn.mat');
     filename_irr_decay_dist_in_rings=dir(dpath + '/' + oxygen_ranges{oxy_ind} + '/' + '*_irr_decay_dist_in_rings.mat');
     oxy.dist_all=[];
     oxy.jox_cell_kn_all=[];
     oxy.o2_levels=[];
     oxy.sigma_o2_levels=[];
+    oxy.nadhf=[];
+    oxy.nadhb=[];
+ 
 
     for i=1:length(filename_cellular_kn)
         % filename_cellular_kn(i).name
@@ -67,8 +72,11 @@ for oxy_ind=1:numel(oxygen_ranges)
        
 
         oxy.dist_all=[oxy.dist_all;dist_mito_cell_dist_mat_mean];
-        jox
+        
         oxy.jox_cell_kn_all=[oxy.jox_cell_kn_all;jox];
+        oxy.nadhf=[oxy.nadhf;nadhf];
+        oxy.nadhb=[oxy.nadhb;nadhf.*(bound_ratio_mito_nadh)];
+        %oxy.background=[oxy.background;]
 
         % if isnan(mean(temp_02_levels))
         %     oxy.dist_all=[oxy.dist_all;NaN];

@@ -65,16 +65,18 @@ end
 
 %%
 % determine whether to include mitochondrial density correction
-mitoCorr = false;
+mitoCorr = true;
 
 n_rings = 10;
 
 % determine range of diffusion coefficients, for which to calculate
 
 if temp_resolved==true
-diff_coeffs = diffusivity(temp_ind);%[1600, 1700, 1800, 1900, 2000, 2100, 2150, 2200, 2250, 2300, 2400, 2450, 2500, 2550, 2600, 2700, 2800, 2900, 3000, 3100, 3200, 3300, 3400, 3500];
+    diff_coeffs = diffusivity(temp_ind);%[1600, 1700, 1800, 1900, 2000, 2100, 2150, 2200, 2250, 2300, 2400, 2450, 2500, 2550, 2600, 2700, 2800, 2900, 3000, 3100, 3200, 3300, 3400, 3500];
 else
-diff_coeffs = diffusivity(4);
+    %ref_diff_coeff = 3320;%2910;
+    %diff_coeffs = ref_diff_coeff+[-400 -300 -200 -100 -50 0 50 100 200 300 400];
+    diff_coeffs = [1000 1050 1100 1150 1200 1250 1300 1350 1400 1450 1500 1550 1600 1650 1700 1750 2000 2250 2500 2750 3000 4000 5000 6000 7000 8000 9000 10000 11000 12000 13000 14000 15000 20000];
 end
 % first, the data (J_ox, r) is reshaped into matrices of dimension
 % (n_oxy_levels)x(n_rings) for easier access
@@ -112,18 +114,6 @@ for ind=1:numel(precise_oxygen_levels)
     jox_data_mitoDist(ind, :) = data(2, :).*mito_weight./2;    
 
 end
-
-% output containers for c_oxy, v_max, k_m have dimensions
-% 2x(n_oxy_levels)x(n_rings), the first dimension stands for results
-% at uncorrected versus corrected intracellular oxygen
-
-cOxy_all = zeros(2, numel(precise_oxygen_levels), n_rings);
-cOxy_all(1, :, :) = repmat(precise_oxygen_levels, n_rings, 1)';
-kM_all =  zeros(2, n_rings);
-sigma_kM_all =  zeros(2, n_rings);
-vMax_all =  zeros(2, n_rings);
-sigma_vMax_all =  zeros(2, n_rings);
-jox_pred = zeros(2, numel(precise_oxygen_levels), n_rings);
 %% test: plot a selection of j_ox gradients to check whether mitoch. density weights are applied or not
 
 cs = viridis(16);
@@ -147,8 +137,7 @@ end
 print_plot = false;
 
 % option to only record quality of fit for corrected iteration
-save_all_its = true;
-
+save_all_its = false;
 % create lists for containing quality of fit at certain diff_coeff
 x2_hist = [];
 r2_hist = [];
@@ -160,7 +149,20 @@ x2_jox_hist = [];
 % be set to zero)
 first_ring = 1;
 
+diffCoeff_cOxy = [];
+
 for diff_ind=1:numel(diff_coeffs)
+    % output containers for c_oxy, v_max, k_m have dimensions
+    % 2x(n_oxy_levels)x(n_rings), the first dimension stands for results
+    % at uncorrected versus corrected intracellular oxygen
+    
+    cOxy_all = zeros(2, numel(precise_oxygen_levels), n_rings);
+    cOxy_all(1, :, :) = repmat(precise_oxygen_levels, n_rings, 1)';
+    kM_all =  zeros(2, n_rings);
+    sigma_kM_all =  zeros(2, n_rings);
+    vMax_all =  zeros(2, n_rings);
+    sigma_vMax_all =  zeros(2, n_rings);
+    jox_pred = zeros(2, numel(precise_oxygen_levels), n_rings);
 
     for it=1:2
     
@@ -272,8 +274,134 @@ for diff_ind=1:numel(diff_coeffs)
         end
     
     end
+    diffCoeff_cOxy = [diffCoeff_cOxy; cOxy_all(2, :, :)];
 
 end
+
+
+%%
+fig = figure('Renderer', 'painters', 'Position', [10 10 900 600],'color','white');
+set(gca,'FontSize',19)
+hold on
+yyaxis left
+plot(diff_coeffs, mean(x2_jox_hist, 2), 'LineWidth',1.5, 'LineStyle',':', 'DisplayName','$J_{\rm ox}$ int. pred.')
+xline(diffusivity(4), 'LineStyle','--', 'Color','black', 'LineWidth',1.5, 'DisplayName','$D=3320 \mu m^2/s$')
+ylabel('$\overline{\chi^2}$', 'Interpreter','latex')
+
+yyaxis right
+coxy_var = mean((diffCoeff_cOxy(2:end, :, :) - diffCoeff_cOxy(1:end-1, :, :)), [2, 3])./(diff_coeffs(2:end)-diff_coeffs(1:end-1))';
+plot(diff_coeffs(2:end), coxy_var, 'Color','red', 'LineWidth',1.5, 'HandleVisibility','off')
+ylabel('$\Delta \hat{c}/\Delta D$ [$\mu M/(\mu m^2/s)$]', 'Interpreter','latex')
+
+xlabel('D [$\mu m^2/s$]', 'Interpreter','latex')
+
+xlim([100, diff_coeffs(end)])
+legend('Interpreter','latex', Location='east')
+
+savefig(string(plot_path)+'chiSqInt_Drobust'+string(temp_string)+'.fig')
+saveas(fig, string(plot_path)+'chiSqInt_Drobust'+string(temp_string)+'.png')
+export_fig(fig, string(plot_path)+'chiSqInt_Drobust'+string(temp_string)+'.eps')
+
+
+%% plot lowest odygen profile variation with diffusion coefficient
+
+figure(2)
+hold on
+cs = parula(numel(diff_coeffs));
+
+fit_params = [];
+sigma_fit_params = [];
+chi_squareds = [];
+R_squareds = [];
+oxy = 1;
+
+for dc_ind=1:numel(diff_coeffs)
+
+    % p = [R, A, lambda]
+    p0 = [r_data(oxy, end) 1 oxy*10];
+    dp = [0 0 0.001];
+    
+    y_weights = squeeze(cOxy_all(2, oxy, end))./sigma_precise_oxygen_levels;
+    fit_start = 2;
+    fit_end = 10;
+
+    pmin = [0 1e-4 1e-4];
+    pmax = [1e4 1e4 1e4];
+
+    c = [];
+
+    % fit
+    max_iter = 100;
+   
+    [p,X2,sigma_p,sigma_y,corr,R_sq,cvg_hst] = ...
+                     lm(@rd_solver_linear, p0,...
+                     r_data(oxy, :)', squeeze(diffCoeff_cOxy(dc_ind, oxy, :))./squeeze(diffCoeff_cOxy(dc_ind, oxy, end)), y_weights(fit_start:fit_end), dp,...
+                     pmin, pmax, c, fit_start, fit_end, max_iter);
+    % !!!optional:
+    % use sum of squared residuals instead of built-in method of lm to evaluate X2
+    %x2_jox = sum(((r_data(oxy,fit_start:fit_end) - linear_model(norm_log_coxy(fit_start:fit_end), p, c)).^2)./norm_log_coxy(fit_start:fit_end));
+    %X2 = x2_jox;
+    
+    
+    plot(r_data(oxy, :), squeeze(diffCoeff_cOxy(dc_ind, oxy, :))./squeeze(diffCoeff_cOxy(dc_ind, oxy, end)), Color=cs(dc_ind, :))
+    %plot(r_data(oxy, :), rd_solver_linear(r_data(oxy, :), p, c), Color=cs(dc_ind, :), LineWidth=1.5)
+    %plot(r_data(oxy, :), rd_solver_linear(r_data(oxy, :), p0, c), Color='red', LineWidth=1.5)
+    
+
+    fit_params = [fit_params, p];
+    sigma_fit_params = [sigma_fit_params, sigma_p];
+    chi_squareds = [chi_squareds X2];
+    R_squareds = [R_squareds R_sq];
+end
+ylim([0.2, 1])
+decay_lengths = fit_params(3, :)
+sigma_decay_lengths = decay_lengths.*(sigma_fit_params(3, :)./fit_params(3, :));
+
+
+%%
+% scatter(diff_coeffs, decay_lengths)
+fig = figure('Renderer', 'painters', 'Position', [10 10 900 600],'color','white');
+hold on
+cs = parula(numel(diff_coeffs));
+
+oxy = 1;
+for dc_ind=1:numel(diff_coeffs)
+    % if (dc_ind>2)&&(dc_ind<8)
+    %     color = 'red';
+    % else
+    %     color = 'black';
+    % end
+    
+    
+    plot(r_data(oxy, :), squeeze(diffCoeff_cOxy(dc_ind, oxy, :))'./squeeze(diffCoeff_cOxy(dc_ind, oxy, end))', 'o', ...
+        'Color', cs(dc_ind, :), 'MarkerSize',10, 'LineWidth',1.5)
+end
+
+xlabel('distance from cell center ($r$) $[\mu m]$', 'Interpreter','latex')
+ylabel('$\hat{c}(c^*, r)/\hat{c}(c^*, R)$', 'Interpreter','latex')
+set(gca,'FontSize',19)
+%title('norm. subcell. oxygen levels', 'Interpreter','latex')
+title('$c^*=$'+string(round(precise_oxygen_levels(oxy), 2))+'$\mu M$', 'Interpreter','latex')
+
+%
+%yscale('log')
+xlim([0, 36])
+
+cb = colorbar;
+clim([0.5 numel(diff_coeffs)+0.5])
+title(cb, '$D [\mathrm{\mu m^2/s}]$', 'Interpreter', 'latex')
+cb.Ticks = linspace(1, numel(diff_coeffs), numel(diff_coeffs));
+cb.TickLabels = diff_coeffs;
+
+level = 6;
+h_axes = axes('position', cb.Position, 'ylim', cb.Limits, 'color', 'none', 'visible','off');
+line(h_axes.XLim, level*[1 1], 'color', 'red', 'parent', h_axes, 'Linewidth', 5);
+
+%savefig(string(plot_path)+'coxy_vs_dist_int_Drobust'+string(temp_string)+'.fig')
+%saveas(fig, string(plot_path)+'coxy_vs_dist_int_Drobust'+string(temp_string)+'.png')
+%export_fig(fig, string(plot_path)+'coxy_vs_dist_int_Drobust'+string(temp_string)+'.eps')
+%%
+errorbar(diff_coeffs, decay_lengths, sigma_p(3, :))
 
 %%
 cs = viridis(16)
@@ -307,17 +435,23 @@ else
     corr_string = '';
 end
 
-% save v_max, k_m profiles
-save(pp_path + "v_max_profiles"+corr_string+string(temp_string)+".mat", "vMax_all")
-save(pp_path + "v_max_profiles"+corr_string+"_sigma"+string(temp_string)+".mat", "sigma_vMax_all")
-save(pp_path + "k_m_profiles"+corr_string+string(temp_string)+".mat", "kM_all")
-save(pp_path + "k_m_profiles"+corr_string+"_sigma"+string(temp_string)+".mat", "sigma_kM_all")
-
-% save corrected oxygen levels
-save(pp_path + "cOxy"+corr_string+string(temp_string)+".mat", "cOxy_all")
-
-% save predicted J_ox gradient
-save(pp_path + "jox_pred"+corr_string+string(temp_string)+".mat", "jox_pred")
+if numel(diff_coeffs)>1
+    % save corrected oxygen levels for all diffCoeffs
+    save(pp_path + "diffCoeffcOxy"+corr_string+string(temp_string)+".mat", "diffCoeff_cOxy")
+    save(pp_path + "diffCoeffs"+corr_string+string(temp_string)+".mat", "diff_coeffs")
+else
+    % save v_max, k_m profiles
+    save(pp_path + "v_max_profiles"+corr_string+string(temp_string)+".mat", "vMax_all")
+    save(pp_path + "v_max_profiles"+corr_string+"_sigma"+string(temp_string)+".mat", "sigma_vMax_all")
+    save(pp_path + "k_m_profiles"+corr_string+string(temp_string)+".mat", "kM_all")
+    save(pp_path + "k_m_profiles"+corr_string+"_sigma"+string(temp_string)+".mat", "sigma_kM_all")
+    
+    % save corrected oxygen levels
+    save(pp_path + "cOxy"+corr_string+string(temp_string)+".mat", "cOxy_all")
+    
+    % save predicted J_ox gradient
+    save(pp_path + "jox_pred"+corr_string+string(temp_string)+".mat", "jox_pred")
+end
 
 
 %% obtain decay lengths from oxygen gradient
