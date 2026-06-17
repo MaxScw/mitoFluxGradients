@@ -1,69 +1,8 @@
-%% designation of oxygen ranges to analyse
-clear all;
-clc;
-
-oxygen_ranges={'run_oxy_l0_h0p1', 'run_oxy_l0p1_h0p2', 'run_oxy_l0p2_h0p3', 'run_oxy_l0p3_h0p4',...
-               'run_oxy_l0p4_h0p6', 'run_oxy_l0p6_h0p8',...
-               'run_oxy_l0p8_h1', 'run_oxy_l1_h1p2',...
-               'run_oxy_l1p2_h1p4', 'run_oxy_l1p4_h1p6',...
-               'run_oxy_l1p6_h1p8',...
-               'run_oxy_l1p8_h2', 'run_oxy_l2_h2p8',...
-               'run_oxy_l2p8_h3p6', 'run_oxy_l3p6_h4p4',...
-               'run_oxy_l4p4_h5p2'};
-num_oxygen_ranges={[0, 0.1], ...
-                   [0.1, 0.2], [0.2, 0.3], [0.3, 0.4],...
-                   [0.4, 0.6], [0.6, 0.8], [0.8, 1.0], [1.0, 1.2],...
-                   [1.2, 1.4], [1.4, 1.6], [1.6, 1.8], [1.8, 2.0],...
-                   [2.0, 2.8], [2.8, 3.6], [3.6, 4.4], [4.4, 5.2]};
-
+%% load setup file for file paths and data
+clc
+clear all
 temp_resolved = false;
-data_path = "/home/mx/mitoFluxGradients/data/";
-pp_path = '../data/EXP_published/postprocessing_results/';
-plot_path = '../data/EXP_published/plots/';
-% temp_resolved = true;
-% data_path = "/home/mx/mitoFluxGradients/data/";
-% pp_path = '../data/EXP_temperatureResolved/postprocessing_results/';
-% plot_path = '../data/EXP_temperatureResolved/plots/';
-
-load(data_path + 'exp_solubilities.mat')
-load(data_path + 'exp_temperatures.mat')
-
-%% loading of mito density, temperatures, solubilities, diffusivities
-load(data_path + "mito_density_oocytes/mito_density.mat")
-mean_mito_density = mean(ratio_num_all_mitotracker, 1);
-
-load(data_path + "exp_solubilities.mat")
-load(data_path + "exp_temperatures.mat")
-load(data_path + "exp_diffusivities.mat")
-
-if temp_resolved==true
-    temp_ind = 4;
-    temp_string = '_T'+string(temperature(temp_ind))+'C';
-else 
-    temp_string = '';
-end
-
-%% loading of read-in (experimental) data
-
-% choose which temperature to plot analysis for (from T=[22, 28, 31, 36]C)
-load(string(pp_path)+'plot_data_multiple_oxy_ranges'+string(temp_string)+'.mat');
-
-precise_oxygen_levels = [];
-sigma_precise_oxygen_levels = [];
-for oxy_ind=1:numel(oxygen_ranges)
-    precise_oxygen_levels = [precise_oxygen_levels, oxygen_ranges_data{oxy_ind}.o2_levels];
-    sigma_precise_oxygen_levels = [sigma_precise_oxygen_levels, mean(oxygen_ranges_data{oxy_ind}.sigma_o2_levels, 'omitnan')];
-end
-if temp_resolved==true
-precise_oxygen_levels = solubility(temp_ind).*precise_oxygen_levels./20.946;
-sigma_precise_oxygen_levels = solubility(temp_ind).*sigma_precise_oxygen_levels./20.946;
-sigma_precise_oxygen_levels(sigma_precise_oxygen_levels==0) = mean(sigma_precise_oxygen_levels);
-else
-precise_oxygen_levels = (213.5/20.946).*precise_oxygen_levels;
-sigma_precise_oxygen_levels = (213.5/20.946).*sigma_precise_oxygen_levels;
-sigma_precise_oxygen_levels(sigma_precise_oxygen_levels==0) = mean(sigma_precise_oxygen_levels);
-end
-
+run("setup.m")
 
 %%
 load(pp_path + "gradient_fit_linear_model"+string(temp_string)+".mat")

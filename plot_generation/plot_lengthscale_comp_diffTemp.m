@@ -1,13 +1,10 @@
-%% compare all decay lengths obtained from linear RD, J_ox log-lin plot, c_oxy log-lin plot
-clear all
+%% load setup file for file paths and data
 clc
+clear all
+temp_resolved = true;
+run("setup.m")
 
-pp_path = '../data/EXP_temperatureResolved/postprocessing_results/';
-plot_path = '../data/EXP_temperatureResolved/plots/';
-data_path = "/home/mx/mitoFluxGradients/data/";
-
-load(data_path + 'exp_solubilities.mat')
-load(data_path + 'exp_temperatures.mat')
+%% compare all decay lengths obtained from linear RD, J_ox log-lin plot, c_oxy log-lin plot
 
 temps = [22 28 31 36];
 kelvin_temps = temps+273.15;
@@ -747,18 +744,25 @@ for temp=1:numel(temps)
                          pmin, pmax, [], fit_start, fit_end, max_iter);
         vMaxFit_temp_list = [vMaxFit_temp_list, p];
         sigma_vMaxFit_temp_list = [sigma_vMaxFit_temp_list, sigma_p];
-
+        
         ylabel('$v_{\mathrm{max}}$ [\,\,\,\,M/s]', 'Interpreter','latex')
     end
     errorbar(dist(start_ring:end), vMax, sigma_vMax,...
         'o', 'MarkerSize',15, 'LineWidth',1.5, 'Color',cs(temp, :))
     dist_range = linspace(dist(start_ring), dist(end), 100);
-    plot(dist_range, exp_model(dist_range, p),...
-        'MarkerSize',15, 'LineWidth',1.5, 'Color',cs(temp, :))
+    % plot(dist_range, exp_model(dist_range, p),...
+    %     'MarkerSize',15, 'LineWidth',1.5, 'Color',cs(temp, :))
     
     xlim([0, 36])
     xlabel('distance from cell center ($r$) [\,\,\,\,m]', 'Interpreter','latex')
 end
+
+cb = colorbar;
+clim([0.5 4.5])
+title(cb, 'T [$^\circ$C]', 'Interpreter', 'latex')
+
+cb.Ticks = linspace(1, 4, 4);
+cb.TickLabels = temps;
 
 if rescaled_params==true
     savefig(string(plot_path)+'vMax_vs_dist_temp_rescaled.fig')
@@ -817,19 +821,13 @@ for temp=1:numel(temps)
     errorbar(dist(start_ring:end), kM, sigma_kM,...
         'o', 'MarkerSize',15, 'LineWidth',1.5, 'Color',cs(temp, :))
     dist_range = linspace(dist(start_ring), dist(end), 100);
-    plot(dist_range, linear_model(dist_range, p),...
-        'MarkerSize',15, 'LineWidth',1.5, 'Color',cs(temp, :))
+    % plot(dist_range, linear_model(dist_range, p),...
+    %     'MarkerSize',15, 'LineWidth',1.5, 'Color',cs(temp, :))
     xlim([0, 36])
     xlabel('distance from cell center ($r$) [\,\,\,\,m]', 'Interpreter','latex')
 end
 
 
-cb = colorbar;
-clim([0.5 4.5])
-title(cb, 'T [$^\circ$C]', 'Interpreter', 'latex')
-
-cb.Ticks = linspace(1, 4, 4);
-cb.TickLabels = temps;
 
 if rescaled_params==true
     savefig(string(plot_path)+'Km_vs_dist_temp_rescaled.fig')
@@ -840,6 +838,8 @@ else
     export_fig(fig2, string(plot_path)+'Km_vs_dist_temp.eps')
 end
 
+%%
+vMaxFit_temp_list
 
 
 %% visualise dependency of k_m(r) fit parameters on temperature
