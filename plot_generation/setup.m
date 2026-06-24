@@ -3,13 +3,13 @@
 project_path = "/home/mx/";
 
 if temp_resolved == false
-data_path = project_path+"mitoFluxGradients/data/";
-pp_path = data_path+'EXP_published/postprocessing_results/';
-plot_path = data_path+'EXP_published/plots/';
+data_path = project_path+"mitoFluxGradients/mitoFluxGradients_data/";
+pp_path = data_path+'EXP_oxygen_drop/postprocessing_results/';
+plot_path = data_path+'EXP_oxygen_drop/plots/';
 else
-data_path = project_path+"mitoFluxGradients/data/";
-pp_path = project_path+'EXP_temperatureResolved/postprocessing_results/';
-plot_path = project_path+'EXP_temperatureResolved/plots/';
+data_path = project_path+"mitoFluxGradients/mitoFluxGradients_data/";
+pp_path = data_path+'EXP_temperature_sweep/postprocessing_results/';
+plot_path = data_path+'EXP_temperature_sweep/plots/';
 end
 
 %% define analysed oxygen intervals for loading data
